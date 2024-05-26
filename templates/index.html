@@ -2,6 +2,15 @@
 
 {% block content %}
 <h1>Create an Account</h1>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <ul>
+      {% for category, message in messages %}
+        <li class="{{ category }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
 <form action="/" method="POST">
     <label for="first_name">First Name:</label>
     <input type="text" id="first_name" name="first_name" required><br><br>
@@ -17,6 +26,12 @@
 
     <label for="confirm_password">Confirm Password:</label>
     <input type="password" id="confirm_password" name="confirm_password" required><br><br>
+
+    <label for="user_type">I am a:</label>
+    <select id="user_type" name="user_type" required>
+        <option value="customer">Customer</option>
+        <option value="barber">Barber</option>
+    </select><br><br>
 
     <button type="submit">Submit</button>
 </form>
