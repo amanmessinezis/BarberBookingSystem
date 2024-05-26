@@ -6,27 +6,43 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///BBS.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'default_secret_key')  # Fallback to default if not set
+
 db = SQLAlchemy(app)
 
 
-class Customer(db.Model):
+class User(db.Model):
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(100), nullable=False)
     last_name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
-    role = db.Column(db.String(50), nullable=False)
+    type = db.Column(db.String(50))
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'user',  # Base type
+        'polymorphic_on': type  # Column used to distinguish between types
+    }
 
 
-class Barber(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(100), nullable=False)
-    last_name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
-    role = db.Column(db.String(50), nullable=False)
+class Customer(User):
+    __tablename__ = 'customer'
+    id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'customer',  # Identity for Customer
+    }
+
+
+class Barber(User):
+    __tablename__ = 'barber'
+    id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     shop_id = db.Column(db.Integer, nullable=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'barber',  # Identity for Barber
+    }
 
 
 with app.app_context():
@@ -43,11 +59,10 @@ def index():
         confirm_password = request.form['confirm_password']
         user_type = request.form['user_type']
 
-        # Check if the email already exists in either table
-        existing_customer = Customer.query.filter_by(email=email).first()
-        existing_barber = Barber.query.filter_by(email=email).first()
+        # Check if the email already exists
+        existing_user = User.query.filter_by(email=email).first()
 
-        if existing_customer or existing_barber:
+        if existing_user:
             flash('An account with this email already exists.', 'error')
             return redirect(url_for('index'))
 
@@ -58,11 +73,9 @@ def index():
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
 
         if user_type == 'customer':
-            new_user = Customer(first_name=first_name, last_name=last_name, email=email, password=hashed_password,
-                                role='customer')
+            new_user = Customer(first_name=first_name, last_name=last_name, email=email, password=hashed_password)
         elif user_type == 'barber':
-            new_user = Barber(first_name=first_name, last_name=last_name, email=email, password=hashed_password,
-                              role='barber')
+            new_user = Barber(first_name=first_name, last_name=last_name, email=email, password=hashed_password)
         else:
             flash('Invalid user type selected.', 'error')
             return redirect(url_for('index'))
@@ -70,7 +83,7 @@ def index():
         try:
             db.session.add(new_user)
             db.session.commit()
-            flash('Account created successfully. Please sign in.', 'success')
+            flash('Account created successfully! Please sign in.', 'success')
             return redirect(url_for('signin'))
         except Exception as e:
             db.session.rollback()
@@ -86,7 +99,7 @@ def signin():
         email = request.form['email']
         password = request.form['password']
 
-        user = Customer.query.filter_by(email=email).first() or Barber.query.filter_by(email=email).first()
+        user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password, password):
             return 'Signed in successfully!'  # Add dashboard redirection or logic here
         else:
