@@ -4,8 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flask BBS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
+    <div class="navbar">
+        {% if current_user.is_authenticated %}
+        <div class="navbar-right">
+            <form action="{{ url_for('logout') }}" method="POST">
+                <button type="submit">Sign Out</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
     <div class="container">
         {% block content %}
         {% endblock %}

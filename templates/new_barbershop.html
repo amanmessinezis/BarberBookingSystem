@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Add a New Barbershop</h1>
+<form action="{{ url_for('new_barbershop') }}" method="POST">
+    <label for="name">Name of Barber:</label>
+    <input type="text" id="name" name="name" required><br><br>
+
+    <label for="address">Location:</label>
+    <input type="text" id="address" name="address" required><br><br>
+
+    <label for="phone_number">Phone Number:</label>
+    <input type="text" id="phone_number" name="phone_number" required><br><br>
+
+    <label for="default_barber">Set as Default Barber:</label>
+    <input type="checkbox" id="default_barber" name="default_barber"><br><br>
+
+    <button type="submit">Submit</button>
+</form>
+{% endblock %}
