@@ -86,6 +86,11 @@ with app.app_context():
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
+    if current_user.is_authenticated:
+        if current_user.type == 'customer':
+            return redirect(url_for('customer_home'))
+        elif current_user.type == 'barber':
+            return redirect(url_for('barber_home'))
     if request.method == 'POST':
         first_name = request.form['first_name']
         last_name = request.form['last_name']
@@ -126,6 +131,7 @@ def index():
             return redirect(url_for('index'))
     else:
         return render_template('index.html')
+
 
 
 @app.route('/signin', methods=['POST', 'GET'])
