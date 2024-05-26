@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///BBS.db'
@@ -9,9 +10,11 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'default_secret_key')  # Fallback to default if not set
 
 db = SQLAlchemy(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'signin'
 
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(100), nullable=False)
@@ -21,9 +24,16 @@ class User(db.Model):
     type = db.Column(db.String(50))
 
     __mapper_args__ = {
-        'polymorphic_identity': 'user',  # Base type
-        'polymorphic_on': type  # Column used to distinguish between types
+        'polymorphic_identity': 'user',
+        'polymorphic_on': type
     }
+
+    def __init__(self, first_name, last_name, email, password, type):
+        self.first_name = first_name
+        self.last_name = last_name
+        self.email = email
+        self.password = password
+        self.type = type
 
 
 class Customer(User):
@@ -31,18 +41,43 @@ class Customer(User):
     id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
 
     __mapper_args__ = {
-        'polymorphic_identity': 'customer',  # Identity for Customer
+        'polymorphic_identity': 'customer',
     }
+
+    def __init__(self, first_name, last_name, email, password):
+        super().__init__(first_name, last_name, email, password, type='customer')
 
 
 class Barber(User):
     __tablename__ = 'barber'
     id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    shop_id = db.Column(db.Integer, nullable=True)
+    shop_id = db.Column(db.Integer, db.ForeignKey('barbershop.shop_id'), nullable=True)
 
     __mapper_args__ = {
-        'polymorphic_identity': 'barber',  # Identity for Barber
+        'polymorphic_identity': 'barber',
     }
+
+    def __init__(self, first_name, last_name, email, password, shopid=None):
+        super().__init__(first_name, last_name, email, password, type='barber')
+        self.shop_id = shopid
+
+
+class Barbershop(db.Model):
+    __tablename__ = 'barbershop'
+    shop_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    address = db.Column(db.String(200), nullable=False)
+    phone_number = db.Column(db.String(15), nullable=False)
+
+    def __init__(self, name, address, phone_number):
+        self.name = name
+        self.address = address
+        self.phone_number = phone_number
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 
 with app.app_context():
@@ -83,7 +118,7 @@ def index():
         try:
             db.session.add(new_user)
             db.session.commit()
-            flash('Account created successfully! Please sign in.', 'success')
+            flash('Account created successfully. Please sign in.', 'success')
             return redirect(url_for('signin'))
         except Exception as e:
             db.session.rollback()
@@ -101,12 +136,65 @@ def signin():
 
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password, password):
-            return 'Signed in successfully!'  # Add dashboard redirection or logic here
+            login_user(user)
+            if user.type == 'customer':
+                return redirect(url_for('customer_home'))
+            elif user.type == 'barber':
+                return redirect(url_for('barber_home'))
+            else:
+                flash('Invalid user type.', 'error')
+                return redirect(url_for('signin'))
         else:
             flash('Invalid email or password', 'error')
             return redirect(url_for('signin'))
     else:
         return render_template('signin.html')
+
+
+@app.route('/customer_home')
+@login_required
+def customer_home():
+    return render_template('customer_home.html')
+
+
+@app.route('/barber_home')
+@login_required
+def barber_home():
+    return render_template('barber_home.html')
+
+
+@app.route('/new_barbershop', methods=['GET', 'POST'])
+@login_required
+def new_barbershop():
+    if request.method == 'POST':
+        name = request.form['name']
+        address = request.form['address']
+        phone_number = request.form['phone_number']
+        default_barber = 'default_barber' in request.form
+
+        new_shop = Barbershop(name=name, address=address, phone_number=phone_number)
+
+        try:
+            db.session.add(new_shop)
+            db.session.commit()
+            if default_barber and current_user.type == 'barber':
+                current_user.shop_id = new_shop.shop_id
+                db.session.commit()
+            flash('Barbershop added successfully.', 'success')
+            return redirect(url_for('barber_home'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'There was an issue adding the barbershop: {e}', 'error')
+            return redirect(url_for('new_barbershop'))
+    else:
+        return render_template('new_barbershop.html')
+
+
+@app.route('/logout', methods=['POST'])
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('signin'))
 
 
 if __name__ == '__main__':
