@@ -11,7 +11,8 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'default_secret_key')  #
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
-login_manager.login_view = 'signin'
+login_manager.login_view = 'signin'  # Specify the login view
+login_manager.session_protection = "strong"  # Optional: set session protection level
 
 
 class User(db.Model, UserMixin):
@@ -38,7 +39,7 @@ class User(db.Model, UserMixin):
 
 class Customer(User):
     __tablename__ = 'customer'
-    id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), primary_key=True)
 
     __mapper_args__ = {
         'polymorphic_identity': 'customer',
@@ -50,8 +51,8 @@ class Customer(User):
 
 class Barber(User):
     __tablename__ = 'barber'
-    id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    shop_id = db.Column(db.Integer, db.ForeignKey('barbershop.shop_id'), nullable=True)
+    id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), primary_key=True)
+    shop_id = db.Column(db.Integer, db.ForeignKey('barbershop.shop_id', ondelete='SET NULL'), nullable=True)
 
     __mapper_args__ = {
         'polymorphic_identity': 'barber',
@@ -133,9 +134,13 @@ def index():
         return render_template('index.html')
 
 
-
 @app.route('/signin', methods=['POST', 'GET'])
 def signin():
+    if current_user.is_authenticated:
+        if current_user.type == 'customer':
+            return redirect(url_for('customer_home'))
+        elif current_user.type == 'barber':
+            return redirect(url_for('barber_home'))
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
