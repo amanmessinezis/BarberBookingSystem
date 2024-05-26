@@ -3,6 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_migrate import Migrate
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///BBS.db'
@@ -10,9 +11,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'default_secret_key')  # Fallback to default if not set
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
 login_manager = LoginManager(app)
-login_manager.login_view = 'signin'  # Specify the login view
-login_manager.session_protection = "strong"  # Optional: set session protection level
+login_manager.login_view = 'signin'
 
 
 class User(db.Model, UserMixin):
@@ -52,7 +54,8 @@ class Customer(User):
 class Barber(User):
     __tablename__ = 'barber'
     id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), primary_key=True)
-    shop_id = db.Column(db.Integer, db.ForeignKey('barbershop.shop_id', ondelete='SET NULL'), nullable=True)
+    shop_id = db.Column(db.Integer, db.ForeignKey('barbershop.shop_id', ondelete='SET NULL'), nullable=True,
+                        unique=True)
 
     __mapper_args__ = {
         'polymorphic_identity': 'barber',
@@ -69,11 +72,13 @@ class Barbershop(db.Model):
     name = db.Column(db.String(100), nullable=False)
     address = db.Column(db.String(200), nullable=False)
     phone_number = db.Column(db.String(15), nullable=False)
+    creator_id = db.Column(db.Integer, db.ForeignKey('barber.id', ondelete='SET NULL'), unique=True)
 
-    def __init__(self, name, address, phone_number):
+    def __init__(self, name, address, phone_number, creator_id):
         self.name = name
         self.address = address
         self.phone_number = phone_number
+        self.creator_id = creator_id
 
 
 @login_manager.user_loader
@@ -171,34 +176,112 @@ def customer_home():
 @app.route('/barber_home')
 @login_required
 def barber_home():
-    return render_template('barber_home.html')
+    barbershops = []
+    search_query = request.args.get('search')  # When searching for a barbershop
+    if search_query:
+        barbershops = Barbershop.query.filter(Barbershop.name.contains(search_query)).all()
+
+    barbershop = None
+    if current_user.shop_id:
+        barbershop = Barbershop.query.get(current_user.shop_id)
+
+    return render_template('barber_home.html', barbershops=barbershops, barbershop=barbershop)
 
 
-@app.route('/new_barbershop', methods=['GET', 'POST'])
+@app.route('/new_barbershop', methods=['POST'])
 @login_required
 def new_barbershop():
-    if request.method == 'POST':
-        name = request.form['name']
-        address = request.form['address']
-        phone_number = request.form['phone_number']
-        default_barber = 'default_barber' in request.form
+    if current_user.shop_id:
+        flash('You already have a barbershop.', 'error')
+        return redirect(url_for('barber_home'))
 
-        new_shop = Barbershop(name=name, address=address, phone_number=phone_number)
+    name = request.form['name']
+    address = request.form['address']
+    phone_number = request.form['phone_number']
+    new_shop = Barbershop(name=name, address=address, phone_number=phone_number, creator_id=current_user.id)
+
+    try:
+        db.session.add(new_shop)
+        db.session.commit()
+        current_user.shop_id = new_shop.shop_id
+        db.session.commit()
+        flash('Barbershop created successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'There was an issue creating the barbershop: {e}', 'error')
+
+    return redirect(url_for('barber_home'))
+
+
+@app.route('/update_barbershop/<int:shop_id>', methods=['GET', 'POST'])
+@login_required
+def update_barbershop(shop_id):
+    shop = Barbershop.query.get_or_404(shop_id)
+    if shop.creator_id != current_user.id:
+        flash('You do not have permission to update this barbershop.', 'error')
+        return redirect(url_for('barber_home'))
+
+    if request.method == 'POST':
+        shop.name = request.form['name']
+        shop.address = request.form['address']
+        shop.phone_number = request.form['phone_number']
 
         try:
-            db.session.add(new_shop)
             db.session.commit()
-            if default_barber and current_user.type == 'barber':
-                current_user.shop_id = new_shop.shop_id
-                db.session.commit()
-            flash('Barbershop added successfully.', 'success')
+            flash('Barbershop updated successfully.', 'success')
             return redirect(url_for('barber_home'))
         except Exception as e:
             db.session.rollback()
-            flash(f'There was an issue adding the barbershop: {e}', 'error')
-            return redirect(url_for('new_barbershop'))
-    else:
-        return render_template('new_barbershop.html')
+            flash(f'There was an issue updating the barbershop: {e}', 'error')
+            return redirect(url_for('update_barbershop', shop_id=shop_id))
+
+    return render_template('update_barbershop.html', shop=shop)
+
+
+@app.route('/delete_barbershop/<int:shop_id>', methods=['POST'])
+@login_required
+def delete_barbershop(shop_id):
+    shop = Barbershop.query.get_or_404(shop_id)
+    if shop.creator_id != current_user.id:
+        flash('You do not have permission to delete this barbershop.', 'error')
+        return redirect(url_for('barber_home'))
+
+    try:
+        db.session.delete(shop)
+        db.session.commit()
+        if current_user.shop_id == shop_id:
+            current_user.shop_id = None
+            db.session.commit()
+        flash('Barbershop deleted successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'There was an issue deleting the barbershop: {e}', 'error')
+
+    return redirect(url_for('barber_home'))
+
+
+@app.route('/join_barbershop/<int:shop_id>', methods=['POST'])
+@login_required
+def join_barbershop(shop_id):
+    barbershop = Barbershop.query.get_or_404(shop_id)
+    current_user.shop_id = barbershop.shop_id
+
+    try:
+        db.session.commit()
+        flash('Joined barbershop successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'There was an issue joining the barbershop: {e}', 'error')
+
+    return redirect(url_for('barber_home'))
+
+
+@app.route('/search_barbershop', methods=['GET'])
+@login_required
+def search_barbershop():
+    search_query = request.args.get('search')
+    barbershops = Barbershop.query.filter(Barbershop.name.contains(search_query)).all()
+    return render_template('barber_home.html', barbershops=barbershops)
 
 
 @app.route('/logout', methods=['POST'])
