@@ -1,7 +1,59 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Welcome to the Barber Home Page!</h1>
-<p>This is where you can manage your schedule, view your clients, and more.</p>
-<a href="{{ url_for('new_barbershop') }}"><button>New Barbershop</button></a>
+<h1>Welcome, {{ current_user.first_name }}</h1>
+
+{% if barbershop %}
+    <h2>Your Barbershop</h2>
+    <p>Name: {{ barbershop.name }}</p>
+    <p>Address: {{ barbershop.address }}</p>
+    <p>Phone: {{ barbershop.phone_number }}</p>
+    {% if barbershop.creator_id == current_user.id %}
+        <form action="{{ url_for('update_barbershop', shop_id=barbershop.shop_id) }}" method="GET">
+            <button type="submit">Update Barbershop</button>
+        </form>
+        <form action="{{ url_for('delete_barbershop', shop_id=barbershop.shop_id) }}" method="POST">
+            <button type="submit">Delete Barbershop</button>
+        </form>
+    {% endif %}
+{% else %}
+    <h2>You are not associated with any Barbershop</h2>
+    <h2>Create a New Barbershop</h2>
+    <form action="{{ url_for('new_barbershop') }}" method="POST">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address" required><br><br>
+
+        <label for="phone_number">Phone Number:</label>
+        <input type="text" id="phone_number" name="phone_number" required><br><br>
+
+        <button type="submit">Create</button>
+    </form>
+{% endif %}
+
+<h2>Search for a Barbershop</h2>
+<form action="{{ url_for('search_barbershop') }}" method="GET">
+    <label for="search">Search:</label>
+    <input type="text" id="search" name="search" required><br><br>
+    <button type="submit">Search</button>
+</form>
+
+{% if barbershops %}
+    <h2>Search Results</h2>
+    <ul>
+    {% for shop in barbershops %}
+        <li>
+            <p>Name: {{ shop.name }}</p>
+            <p>Address: {{ shop.address }}</p>
+            <p>Phone: {{ shop.phone_number }}</p>
+            <form action="{{ url_for('join_barbershop', shop_id=shop.shop_id) }}" method="POST">
+                <button type="submit">Join Barbershop</button>
+            </form>
+        </li>
+    {% endfor %}
+    </ul>
+{% endif %}
+
 {% endblock %}
