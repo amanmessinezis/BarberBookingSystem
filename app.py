@@ -54,8 +54,7 @@ class Customer(User):
 class Barber(User):
     __tablename__ = 'barber'
     id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), primary_key=True)
-    shop_id = db.Column(db.Integer, db.ForeignKey('barbershop.shop_id', ondelete='SET NULL'), nullable=True,
-                        unique=True)
+    shop_id = db.Column(db.Integer, db.ForeignKey('barbershop.shop_id', ondelete='SET NULL'), nullable=True)
 
     __mapper_args__ = {
         'polymorphic_identity': 'barber',
@@ -177,8 +176,8 @@ def customer_home():
 @login_required
 def barber_home():
     barbershops = []
-    search_query = request.args.get('search')  # When searching for a barbershop
-    if search_query:
+    search_query = request.args.get('search')
+    if search_query and not current_user.shop_id:
         barbershops = Barbershop.query.filter(Barbershop.name.contains(search_query)).all()
 
     barbershop = None
@@ -192,7 +191,7 @@ def barber_home():
 @login_required
 def new_barbershop():
     if current_user.shop_id:
-        flash('You already have a barbershop.', 'error')
+        flash('You cannot create a new barbershop because you are already associated with one.', 'error')
         return redirect(url_for('barber_home'))
 
     name = request.form['name']
@@ -279,6 +278,10 @@ def join_barbershop(shop_id):
 @app.route('/search_barbershop', methods=['GET'])
 @login_required
 def search_barbershop():
+    if current_user.shop_id:
+        flash('You cannot search for a barbershop because you are already associated with one.', 'error')
+        return redirect(url_for('barber_home'))
+
     search_query = request.args.get('search')
     barbershops = Barbershop.query.filter(Barbershop.name.contains(search_query)).all()
     return render_template('barber_home.html', barbershops=barbershops)
