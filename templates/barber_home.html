@@ -15,6 +15,10 @@
         <form action="{{ url_for('delete_barbershop', shop_id=barbershop.shop_id) }}" method="POST">
             <button type="submit">Delete Barbershop</button>
         </form>
+    {% else %}
+        <form action="{{ url_for('leave_barbershop', shop_id=barbershop.shop_id) }}" method="POST">
+            <button type="submit">Leave Barbershop</button>
+        </form>
     {% endif %}
 {% else %}
     <h2>You are not associated with any Barbershop</h2>

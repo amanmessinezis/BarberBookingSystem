@@ -2,15 +2,6 @@
 
 {% block content %}
 <h1>Create an Account</h1>
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    <ul>
-      {% for category, message in messages %}
-        <li class="{{ category }}">{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-{% endwith %}
 <form action="/" method="POST">
     <label for="first_name">First Name:</label>
     <input type="text" id="first_name" name="first_name" required><br><br>

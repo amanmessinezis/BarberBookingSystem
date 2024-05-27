@@ -262,6 +262,10 @@ def delete_barbershop(shop_id):
 @app.route('/join_barbershop/<int:shop_id>', methods=['POST'])
 @login_required
 def join_barbershop(shop_id):
+    if current_user.shop_id:
+        flash('You are already associated with a barbershop.', 'error')
+        return redirect(url_for('barber_home'))
+
     barbershop = Barbershop.query.get_or_404(shop_id)
     current_user.shop_id = barbershop.shop_id
 
@@ -287,10 +291,35 @@ def search_barbershop():
     return render_template('barber_home.html', barbershops=barbershops)
 
 
+@app.route('/leave_barbershop/<int:shop_id>', methods=['POST'])
+@login_required
+def leave_barbershop(shop_id):
+    if current_user.shop_id != shop_id:
+        flash('You cannot leave a barbershop you are not associated with.', 'error')
+        return redirect(url_for('barber_home'))
+
+    barbershop = Barbershop.query.get_or_404(shop_id)
+    if barbershop.creator_id == current_user.id:
+        flash('You cannot leave a barbershop you created. Delete the barbershop instead.', 'error')
+        return redirect(url_for('barber_home'))
+
+    current_user.shop_id = None
+
+    try:
+        db.session.commit()
+        flash('You have left the barbershop.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'There was an issue leaving the barbershop: {e}', 'error')
+
+    return redirect(url_for('barber_home'))
+
+
 @app.route('/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()
+    flash('You have been logged out successfully.', 'success')
     return redirect(url_for('signin'))
 
 
