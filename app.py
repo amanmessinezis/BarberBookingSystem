@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -313,6 +313,40 @@ def leave_barbershop(shop_id):
         flash(f'There was an issue leaving the barbershop: {e}', 'error')
 
     return redirect(url_for('barber_home'))
+
+
+@app.route('/api/events')
+@login_required
+def get_events():
+    # Example events - replace with events from your database
+    events = [
+        {
+            'title': 'Barbershop Appointment',
+            'start': '2023-06-01T10:00:00',
+            'end': '2023-06-01T11:00:00'
+        },
+        {
+            'title': 'Another Appointment',
+            'start': '2023-06-02T12:00:00',
+            'end': '2023-06-02T13:00:00'
+        }
+    ]
+    return jsonify(events)
+
+
+@app.route('/calendar')
+@login_required
+def calendar():
+    return render_template('calendar.html')
+
+
+@app.route('/api/events', methods=['POST'])
+@login_required
+def create_event():
+    data = request.get_json()
+    # Save event to the database
+    # For example purposes, we simply return the data back
+    return jsonify(data), 201
 
 
 @app.route('/logout', methods=['POST'])

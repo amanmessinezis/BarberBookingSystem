@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Your Calendar</h1>
+    <div id='calendar'></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'en',
+                events: '/api/events',  // Replace with your API endpoint
+                dateClick: function (info) {
+                    var title = prompt('Enter Event Title:');
+                    if (title) {
+                        var eventData = {
+                            title: title,
+                            start: info.dateStr
+                        };
+                        $.ajax({
+                            url: '/api/events',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify(eventData),
+                            success: function () {
+                                calendar.addEvent(eventData);
+                                alert('Event added successfully!');
+                            },
+                            error: function () {
+                                alert('There was an error adding the event.');
+                            }
+                        });
+                    }
+                }
+            });
+            calendar.render();
+        });
+    </script>
+{% endblock %}

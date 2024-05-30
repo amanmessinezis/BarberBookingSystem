@@ -3,31 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barber Booking System</title>
+    <title>Flask BBS</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet'/>
 </head>
 <body>
-    <div class="navbar">
-        {% if current_user.is_authenticated %}
+<div class="navbar">
+    {% if current_user.is_authenticated %}
         <div class="navbar-right">
             <form action="{{ url_for('logout') }}" method="POST">
                 <button type="submit">Sign Out</button>
             </form>
         </div>
-        {% endif %}
-    </div>
-    <div class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
+    {% endif %}
+</div>
+<div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
             <div class="flash-messages">
-              {% for category, message in messages %}
-                <div class="flash-{{ category }}">{{ message }}</div>
-              {% endfor %}
+                {% for category, message in messages %}
+                    <div class="flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
             </div>
-          {% endif %}
-        {% endwith %}
-        {% block content %}
-        {% endblock %}
-    </div>
+        {% endif %}
+    {% endwith %}
+    {% block content %}
+    {% endblock %}
+</div>
+<!-- FullCalendar JS -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales-all.min.js'></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </body>
 </html>
