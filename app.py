@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_migrate import Migrate
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///BBS.db'
@@ -351,22 +352,10 @@ def calendar():
     return render_template('calendar.html')
 
 
-@app.route('/api/events', methods=['POST'])
-@login_required
-def create_event():
-    data = request.get_json()
-    # Save event to the database
-    # For example purposes, we simply return the data back
-    return jsonify(data), 201
-
-
 @app.route('/add_availability')
 @login_required
 def add_availability():
     return render_template('add_availability.html')
-
-
-from datetime import datetime
 
 
 @app.route('/save_availability', methods=['POST'])
