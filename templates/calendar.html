@@ -10,7 +10,12 @@
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'en',
-                events: '/api/events',  // Replace with your API endpoint
+                events: '/api/events',
+                eventTimeFormat: { // like '14:30:00'
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    meridiem: 'short'
+                },
                 dateClick: function (info) {
                     var title = prompt('Enter Event Title:');
                     if (title) {

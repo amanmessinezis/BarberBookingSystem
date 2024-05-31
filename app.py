@@ -51,6 +51,20 @@ class Customer(User):
         super().__init__(first_name, last_name, email, password, type='customer')
 
 
+class Availability(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    barber_id = db.Column(db.Integer, db.ForeignKey('barber.id', ondelete='CASCADE'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+
+    def __init__(self, barber_id, date, start_time, end_time):
+        self.barber_id = barber_id
+        self.date = date
+        self.start_time = start_time
+        self.end_time = end_time
+
+
 class Barber(User):
     __tablename__ = 'barber'
     id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), primary_key=True)
@@ -318,19 +332,16 @@ def leave_barbershop(shop_id):
 @app.route('/api/events')
 @login_required
 def get_events():
-    # Example events - replace with events from your database
-    events = [
-        {
-            'title': 'Barbershop Appointment',
-            'start': '2023-06-01T10:00:00',
-            'end': '2023-06-01T11:00:00'
-        },
-        {
-            'title': 'Another Appointment',
-            'start': '2023-06-02T12:00:00',
-            'end': '2023-06-02T13:00:00'
-        }
-    ]
+    availabilities = Availability.query.filter_by(barber_id=current_user.id).all()
+    events = []
+
+    for availability in availabilities:
+        events.append({
+            'title': 'Available',
+            'start': f"{availability.date}T{availability.start_time}",
+            'end': f"{availability.date}T{availability.end_time}"
+        })
+
     return jsonify(events)
 
 
@@ -347,6 +358,44 @@ def create_event():
     # Save event to the database
     # For example purposes, we simply return the data back
     return jsonify(data), 201
+
+
+@app.route('/add_availability')
+@login_required
+def add_availability():
+    return render_template('add_availability.html')
+
+
+from datetime import datetime
+
+
+@app.route('/save_availability', methods=['POST'])
+@login_required
+def save_availability():
+    date_str = request.form['date']
+    start_time_str = request.form['start_time']
+    end_time_str = request.form['end_time']
+
+    try:
+        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        start_time = datetime.strptime(start_time_str, '%H:%M').time()
+        end_time = datetime.strptime(end_time_str, '%H:%M').time()
+
+        new_availability = Availability(
+            barber_id=current_user.id,
+            date=date,
+            start_time=start_time,
+            end_time=end_time
+        )
+
+        db.session.add(new_availability)
+        db.session.commit()
+        flash('Availability added successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'There was an issue adding your availability: {e}', 'error')
+
+    return redirect(url_for('barber_home'))
 
 
 @app.route('/logout', methods=['POST'])
