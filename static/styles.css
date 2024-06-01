@@ -30,3 +30,16 @@
 h1, h2 {
     color: #333;
 }
+
+.service-item {
+    display: flex;
+    align-items: center;
+}
+
+.service-item span {
+    margin-right: 10px;
+}
+
+.service-item button {
+    margin-left: 5px;
+}

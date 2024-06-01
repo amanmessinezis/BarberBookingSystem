@@ -1,10 +1,11 @@
 import os
+from datetime import datetime
+
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_migrate import Migrate
-from datetime import datetime
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///BBS.db'
@@ -93,6 +94,20 @@ class Barbershop(db.Model):
         self.address = address
         self.phone_number = phone_number
         self.creator_id = creator_id
+
+
+class Service(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    barber_id = db.Column(db.Integer, db.ForeignKey('barber.id', ondelete='CASCADE'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    duration = db.Column(db.Integer, nullable=False)  # Duration in minutes
+    price = db.Column(db.Float, nullable=False)
+
+    def __init__(self, barber_id, name, duration, price):
+        self.barber_id = barber_id
+        self.name = name
+        self.duration = duration
+        self.price = price
 
 
 @login_manager.user_loader
@@ -199,7 +214,9 @@ def barber_home():
     if current_user.shop_id:
         barbershop = Barbershop.query.get(current_user.shop_id)
 
-    return render_template('barber_home.html', barbershops=barbershops, barbershop=barbershop)
+    services = Service.query.filter_by(barber_id=current_user.id).all()
+
+    return render_template('barber_home.html', barbershops=barbershops, barbershop=barbershop, services=services)
 
 
 @app.route('/new_barbershop', methods=['POST'])
@@ -330,6 +347,50 @@ def leave_barbershop(shop_id):
     return redirect(url_for('barber_home'))
 
 
+@app.route('/update_service/<int:service_id>', methods=['GET', 'POST'])
+@login_required
+def update_service(service_id):
+    service = Service.query.get_or_404(service_id)
+    if service.barber_id != current_user.id:
+        flash('You do not have permission to update this service.', 'error')
+        return redirect(url_for('barber_home'))
+
+    if request.method == 'POST':
+        service.name = request.form['name']
+        service.duration = request.form['duration']
+        service.price = request.form['price']
+
+        try:
+            db.session.commit()
+            flash('Service updated successfully.', 'success')
+            return redirect(url_for('barber_home'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'There was an issue updating the service: {e}', 'error')
+            return redirect(url_for('update_service', service_id=service_id))
+
+    return render_template('update_service.html', service=service)
+
+
+@app.route('/delete_service/<int:service_id>', methods=['POST'])
+@login_required
+def delete_service(service_id):
+    service = Service.query.get_or_404(service_id)
+    if service.barber_id != current_user.id:
+        flash('You do not have permission to delete this service.', 'error')
+        return redirect(url_for('barber_home'))
+
+    try:
+        db.session.delete(service)
+        db.session.commit()
+        flash('Service deleted successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'There was an issue deleting the service: {e}', 'error')
+
+    return redirect(url_for('barber_home'))
+
+
 @app.route('/api/events')
 @login_required
 def get_events():
@@ -385,6 +446,44 @@ def save_availability():
         flash(f'There was an issue adding your availability: {e}', 'error')
 
     return redirect(url_for('barber_home'))
+
+
+@app.route('/add_service')
+@login_required
+def add_service():
+    return render_template('add_service.html')
+
+
+@app.route('/save_service', methods=['POST'])
+@login_required
+def save_service():
+    name = request.form['name']
+    duration = request.form['duration']
+    price = request.form['price']
+
+    try:
+        new_service = Service(
+            barber_id=current_user.id,
+            name=name,
+            duration=int(duration),
+            price=float(price)
+        )
+
+        db.session.add(new_service)
+        db.session.commit()
+        flash('Service added successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'There was an issue adding your service: {e}', 'error')
+
+    return redirect(url_for('barber_home'))
+
+
+@app.route('/services')
+@login_required
+def services():
+    services = Service.query.filter_by(barber_id=current_user.id).all()
+    return render_template('services.html', services=services)
 
 
 @app.route('/logout', methods=['POST'])
