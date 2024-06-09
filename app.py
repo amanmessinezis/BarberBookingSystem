@@ -202,6 +202,14 @@ def customer_home():
     return render_template('customer_home.html')
 
 
+@app.route('/customer_search_barbershop', methods=['GET'])
+@login_required
+def customer_search_barbershop():
+    search_query = request.args.get('search')
+    barbershops = Barbershop.query.filter(Barbershop.name.contains(search_query)).all()
+    return render_template('customer_home.html', barbershops=barbershops)
+
+
 @app.route('/barber_home')
 @login_required
 def barber_home():
@@ -317,7 +325,8 @@ def join_barbershop(shop_id):
 @login_required
 def search_barbershop():
     if current_user.shop_id:
-        flash('You cannot search for a barbershop because you are already associated with one.', 'error')
+        flash('You cannot search for a barbershop because you are already associated with one.'
+              , 'error')
         return redirect(url_for('barber_home'))
 
     search_query = request.args.get('search')

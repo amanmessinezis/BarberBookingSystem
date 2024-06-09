@@ -1,6 +1,26 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>Welcome to the Customer Home Page!</h1>
-    <p>This is where you can manage your bookings, view barbers, and more.</p>
+    <h1>Welcome, {{ current_user.first_name }}</h1>
+
+    <h2>Search for Barbershops</h2>
+    <form action="{{ url_for('customer_search_barbershop') }}" method="GET">
+        <label for="search">Search:</label>
+        <input type="text" id="search" name="search" required><br><br>
+        <button type="submit">Search</button>
+    </form>
+
+    {% if barbershops %}
+        <h2>Search Results</h2>
+        <ul>
+            {% for shop in barbershops %}
+                <li>
+                    <p>Name: {{ shop.name }}</p>
+                    <p>Address: {{ shop.address }}</p>
+                    <p>Phone: {{ shop.phone_number }}</p>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
 {% endblock %}
