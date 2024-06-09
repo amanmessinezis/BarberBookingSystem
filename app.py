@@ -334,6 +334,21 @@ def search_barbershop():
     return render_template('barber_home.html', barbershops=barbershops)
 
 
+@app.route('/view_barbers/<int:shop_id>', methods=['GET'])
+@login_required
+def view_barbers(shop_id):
+    barbershop = Barbershop.query.get_or_404(shop_id)
+    barbers = Barber.query.filter_by(shop_id=shop_id).all()
+    barber_services = {}
+
+    for barber in barbers:
+        services = Service.query.filter_by(barber_id=barber.id).all()
+        barber_services[barber.id] = services
+
+    return render_template('view_barbers.html', barbershop=barbershop, barbers=barbers,
+                           barber_services=barber_services)
+
+
 @app.route('/leave_barbershop/<int:shop_id>', methods=['POST'])
 @login_required
 def leave_barbershop(shop_id):

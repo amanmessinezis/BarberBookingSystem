@@ -18,6 +18,9 @@
                     <p>Name: {{ shop.name }}</p>
                     <p>Address: {{ shop.address }}</p>
                     <p>Phone: {{ shop.phone_number }}</p>
+                    <form action="{{ url_for('view_barbers', shop_id=shop.shop_id) }}" method="GET">
+                        <button type="submit">View Barbers and Services</button>
+                    </form>
                 </li>
             {% endfor %}
         </ul>
