@@ -403,8 +403,12 @@ def update_availability(availability_id):
 
     if request.method == 'POST':
         availability.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
-        availability.start_time = datetime.strptime(request.form['start_time'], '%H:%M').time()
-        availability.end_time = datetime.strptime(request.form['end_time'], '%H:%M').time()
+        # Ensure seconds are stripped from the time string before parsing
+        start_time_str = request.form['start_time']
+        end_time_str = request.form['end_time']
+        availability.start_time = datetime.strptime(start_time_str,
+                                                    '%H:%M:%S' if ':' in start_time_str else '%H:%M').time()
+        availability.end_time = datetime.strptime(end_time_str, '%H:%M:%S' if ':' in end_time_str else '%H:%M').time()
 
         try:
             db.session.commit()
