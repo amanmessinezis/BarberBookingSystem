@@ -43,3 +43,17 @@ h1, h2 {
 .service-item button {
     margin-left: 5px;
 }
+
+.availability-item {
+    display: flex;
+    align-items: center;
+}
+
+.availability-item span {
+    margin-right: 10px;
+}
+
+.availability-item button {
+    margin-left: 5px;
+}
+
