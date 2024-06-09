@@ -349,6 +349,24 @@ def view_barbers(shop_id):
                            barber_services=barber_services)
 
 
+@app.route('/book_appointment/<int:service_id>', methods=['GET'])
+@login_required
+def book_appointment(service_id):
+    service = Service.query.get_or_404(service_id)
+    barber = Barber.query.get(service.barber_id)
+    availabilities = Availability.query.filter_by(barber_id=barber.id).all()
+    available_days = []
+
+    for availability in availabilities:
+        # Check if the availability duration is long enough for the service
+        availability_duration = (datetime.combine(datetime.min, availability.end_time) - datetime.combine(datetime.min,
+                                                                                                          availability.start_time)).seconds // 60
+        if availability_duration >= service.duration:
+            available_days.append(availability.date)
+
+    return render_template('book_appointment.html', service=service, barber=barber, available_days=available_days)
+
+
 @app.route('/leave_barbershop/<int:shop_id>', methods=['POST'])
 @login_required
 def leave_barbershop(shop_id):
