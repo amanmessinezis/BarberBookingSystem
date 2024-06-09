@@ -69,6 +69,23 @@
         {% endfor %}
     </ul>
 
+    <h2>Your Availabilities</h2>
+    <ul>
+        {% for availability in availabilities %}
+            <li class="availability-item">
+                <span>{{ availability.date }} from {{ availability.start_time.strftime('%H:%M') }} to {{ availability.end_time.strftime('%H:%M') }}</span>
+                <a href="{{ url_for('update_availability', availability_id=availability.id) }}">
+                    <button>Update</button>
+                </a>
+                <form action="{{ url_for('delete_availability', availability_id=availability.id) }}" method="POST"
+                      style="display: inline;">
+                    <button type="submit">Delete</button>
+                </form>
+            </li>
+        {% endfor %}
+
+    </ul>
+
     {% if not current_user.shop_id %}
         <h2>Search for a Barbershop</h2>
         <form action="{{ url_for('search_barbershop') }}" method="GET">

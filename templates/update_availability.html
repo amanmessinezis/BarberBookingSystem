@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Update Availability</h1>
+    <form action="{{ url_for('update_availability', availability_id=availability.id) }}" method="POST">
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date" value="{{ availability.date }}" required><br><br>
+
+        <label for="start_time">Start Time:</label>
+        <input type="time" id="start_time" name="start_time" value="{{ availability.start_time }}" required><br><br>
+
+        <label for="end_time">End Time:</label>
+        <input type="time" id="end_time" name="end_time" value="{{ availability.end_time }}" required><br><br>
+
+        <button type="submit">Update Availability</button>
+    </form>
+{% endblock %}

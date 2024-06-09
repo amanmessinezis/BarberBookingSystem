@@ -215,8 +215,10 @@ def barber_home():
         barbershop = Barbershop.query.get(current_user.shop_id)
 
     services = Service.query.filter_by(barber_id=current_user.id).all()
+    availabilities = Availability.query.filter_by(barber_id=current_user.id).all()
 
-    return render_template('barber_home.html', barbershops=barbershops, barbershop=barbershop, services=services)
+    return render_template('barber_home.html', barbershops=barbershops, barbershop=barbershop,
+                           services=services, availabilities=availabilities)
 
 
 @app.route('/new_barbershop', methods=['POST'])
@@ -387,6 +389,50 @@ def delete_service(service_id):
     except Exception as e:
         db.session.rollback()
         flash(f'There was an issue deleting the service: {e}', 'error')
+
+    return redirect(url_for('barber_home'))
+
+
+@app.route('/update_availability/<int:availability_id>', methods=['GET', 'POST'])
+@login_required
+def update_availability(availability_id):
+    availability = Availability.query.get_or_404(availability_id)
+    if availability.barber_id != current_user.id:
+        flash('You do not have permission to update this availability.', 'error')
+        return redirect(url_for('barber_home'))
+
+    if request.method == 'POST':
+        availability.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
+        availability.start_time = datetime.strptime(request.form['start_time'], '%H:%M').time()
+        availability.end_time = datetime.strptime(request.form['end_time'], '%H:%M').time()
+
+        try:
+            db.session.commit()
+            flash('Availability updated successfully.', 'success')
+            return redirect(url_for('barber_home'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'There was an issue updating the availability: {e}', 'error')
+            return redirect(url_for('update_availability', availability_id=availability_id))
+
+    return render_template('update_availability.html', availability=availability)
+
+
+@app.route('/delete_availability/<int:availability_id>', methods=['POST'])
+@login_required
+def delete_availability(availability_id):
+    availability = Availability.query.get_or_404(availability_id)
+    if availability.barber_id != current_user.id:
+        flash('You do not have permission to delete this availability.', 'error')
+        return redirect(url_for('barber_home'))
+
+    try:
+        db.session.delete(availability)
+        db.session.commit()
+        flash('Availability deleted successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'There was an issue deleting the availability: {e}', 'error')
 
     return redirect(url_for('barber_home'))
 
