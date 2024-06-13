@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -227,76 +227,6 @@ def barber_home():
 
     return render_template('barber_home.html', barbershops=barbershops, barbershop=barbershop,
                            services=services, availabilities=availabilities)
-
-
-@app.route('/book_appointment/<int:service_id>', methods=['GET'])
-@login_required
-def book_appointment(service_id):
-    service = Service.query.get_or_404(service_id)
-    barber = Barber.query.get(service.barber_id)
-    availabilities = Availability.query.filter_by(barber_id=barber.id).all()
-    available_days = []
-
-    for availability in availabilities:
-        availability_duration = (datetime.combine(datetime.min, availability.end_time) -
-                                 datetime.combine(datetime.min, availability.start_time)).seconds // 60
-        if availability_duration >= service.duration:
-            available_days.append(availability.date)
-
-    return render_template('book_appointment.html', service=service, barber=barber, available_days=available_days)
-
-
-@app.route('/choose_time/<int:service_id>/<date>', methods=['GET', 'POST'])
-@login_required
-def choose_time(service_id, date):
-    service = Service.query.get_or_404(service_id)
-    barber = Barber.query.get(service.barber_id)
-    availabilities = Availability.query.filter_by(barber_id=barber.id, date=date).all()
-    available_times = []
-
-    for availability in availabilities:
-        start_time = availability.start_time
-        end_time = availability.end_time
-        current_time = datetime.combine(datetime.min, start_time)
-        end_time = datetime.combine(datetime.min, end_time)
-        while current_time + timedelta(minutes=service.duration) <= end_time:
-            available_times.append(current_time.time().strftime('%H:%M'))
-            current_time += timedelta(minutes=service.duration)
-
-    if request.method == 'POST':
-        start_time_str = request.form['start_time']
-        start_time = datetime.strptime(start_time_str, '%H:%M').time()
-        end_time = (datetime.combine(datetime.min, start_time) + timedelta(minutes=service.duration)).time()
-
-        # Check if the selected time is within the barber's availability
-        for availability in availabilities:
-            if start_time >= availability.start_time and end_time <= availability.end_time:
-                # Book the appointment
-                # You would typically create an Appointment model to save this information
-                # Here, we'll just flash a message for simplicity
-                flash('Appointment booked successfully.', 'success')
-                return redirect(url_for('customer_home'))
-
-        flash('Selected time is not available. Please choose another time.', 'error')
-
-    return render_template('choose_time.html', service=service, barber=barber, date=date,
-                           available_times=available_times)
-
-
-@app.route('/api/availability/<int:barber_id>/<date>')
-@login_required
-def api_availability(barber_id, date):
-    availabilities = Availability.query.filter_by(barber_id=barber_id, date=date).all()
-    events = []
-
-    for availability in availabilities:
-        events.append({
-            'title': 'Available',
-            'start': f"{availability.date}T{availability.start_time}",
-            'end': f"{availability.date}T{availability.end_time}"
-        })
-
-    return jsonify(events)
 
 
 @app.route('/new_barbershop', methods=['POST'])
