@@ -8,23 +8,16 @@
         document.addEventListener('DOMContentLoaded', function () {
             var calendarEl = document.getElementById('calendar');
             var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'timeGridWeek',
+                initialView: 'dayGridMonth',
                 locale: 'en',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                },
-                events: function (fetchInfo, successCallback, failureCallback) {
-                    fetch('/api/barber_events')
-                        .then(response => response.json())
-                        .then(data => successCallback(data))
-                        .catch(error => failureCallback(error));
-                },
-                eventTimeFormat: {
+                events: '/api/events',
+                eventTimeFormat: { // like '14:30:00'
                     hour: '2-digit',
                     minute: '2-digit',
                     meridiem: 'short'
+                },
+                dateClick: function (info) {
+                    calendar.changeView('timeGridDay', info.dateStr);
                 }
             });
             calendar.render();
