@@ -50,6 +50,9 @@ class Appointment(db.Model):
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
 
+    barber = db.relationship('Barber', backref='appointments', lazy=True)
+    customer = db.relationship('Customer', backref='appointments', lazy=True)
+
 
 class Customer(User):
     __tablename__ = 'customer'
@@ -133,7 +136,7 @@ with app.app_context():
 def index():
     if current_user.is_authenticated:
         if current_user.type == 'customer':
-            return redirect(url_for('customer_home'))
+            return redirect(url_for('customer_appointments'))
         elif current_user.type == 'barber':
             return redirect(url_for('barber_home'))
     if request.method == 'POST':
@@ -182,7 +185,7 @@ def index():
 def signin():
     if current_user.is_authenticated:
         if current_user.type == 'customer':
-            return redirect(url_for('customer_home'))
+            return redirect(url_for('customer_appointments'))
         elif current_user.type == 'barber':
             return redirect(url_for('barber_home'))
     if request.method == 'POST':
@@ -193,7 +196,7 @@ def signin():
         if user and check_password_hash(user.password, password):
             login_user(user)
             if user.type == 'customer':
-                return redirect(url_for('customer_home'))
+                return redirect(url_for('customer_appointments'))
             elif user.type == 'barber':
                 return redirect(url_for('barber_home'))
             else:
@@ -206,18 +209,12 @@ def signin():
         return render_template('signin.html')
 
 
-@app.route('/customer_home')
-@login_required
-def customer_home():
-    return render_template('customer_home.html')
-
-
 @app.route('/customer_search_barbershop', methods=['GET'])
 @login_required
 def customer_search_barbershop():
     search_query = request.args.get('search')
     barbershops = Barbershop.query.filter(Barbershop.name.contains(search_query)).all()
-    return render_template('customer_home.html', barbershops=barbershops)
+    return render_template('customer_appointments.html', barbershops=barbershops)
 
 
 @app.route('/barber_home')
@@ -370,7 +367,7 @@ def choose_time(service_id, date):
         db.session.add(appointment)
         db.session.commit()
         flash('Appointment confirmed.', 'success')
-        return redirect(url_for('customer_home'))
+        return redirect(url_for('customer_appointments'))
 
     return render_template('choose_time.html', service=service, barber=barber, date=date)
 
