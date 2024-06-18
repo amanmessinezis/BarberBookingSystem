@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Update Appointment</h1>
+
+    <form action="{{ url_for('update_appointment', appointment_id=appointment.id) }}" method="POST">
+        <label for="start_time">Start Time:</label>
+        <input type="time" id="start_time" name="start_time" value="{{ appointment.start_time.strftime('%H:%M') }}"
+               required><br><br>
+        <button type="submit">Update Appointment</button>
+    </form>
+
+{% endblock %}

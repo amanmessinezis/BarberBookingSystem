@@ -3,12 +3,10 @@
 {% block content %}
     <h1>Welcome, {{ current_user.first_name }}</h1>
 
-    <h2>Search for Barbershops</h2>
-    <form action="{{ url_for('customer_search_barbershop') }}" method="GET">
-        <label for="search">Search:</label>
-        <input type="text" id="search" name="search" required><br><br>
-        <button type="submit">Search</button>
-    </form>
+    <h2>Your Options</h2>
+    <a href="{{ url_for('customer_appointments') }}">
+        <button>View Upcoming Appointments</button>
+    </a>
 
     {% if barbershops %}
         <h2>Search Results</h2>
@@ -19,7 +17,7 @@
                     <p>Address: {{ shop.address }}</p>
                     <p>Phone: {{ shop.phone_number }}</p>
                     <form action="{{ url_for('view_barbers', shop_id=shop.shop_id) }}" method="GET">
-                        <button type="submit">View Barbers and Services</button>
+                        <button type="submit">Book Appointment</button>
                     </form>
                 </li>
             {% endfor %}
