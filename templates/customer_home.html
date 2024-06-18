@@ -3,34 +3,27 @@
 {% block content %}
     <h1>Welcome, {{ current_user.first_name }}</h1>
 
-    <h2>Your Options</h2>
-    <a href="{{ url_for('customer_search_barbershop') }}">
-        <button>Search for Barbershops</button>
-    </a>
+    <h2>Search for Barbershops</h2>
+    <form action="{{ url_for('customer_search_barbershop') }}" method="GET">
+        <label for="search">Search:</label>
+        <input type="text" id="search" name="search" required><br><br>
+        <button type="submit">Search</button>
+    </form>
 
-    <h2>Your Upcoming Appointments</h2>
-
-    {% if appointments %}
+    {% if barbershops %}
+        <h2>Search Results</h2>
         <ul>
-            {% for appointment in appointments %}
+            {% for shop in barbershops %}
                 <li>
-                    <p>Barber: {{ appointment.barber.first_name }} {{ appointment.barber.last_name }}</p>
-                    <p>Date: {{ appointment.date }}</p>
-                    <p>Time: {{ appointment.start_time.strftime('%H:%M') }}
-                        - {{ appointment.end_time.strftime('%H:%M') }}</p>
-                    <form action="{{ url_for('update_appointment', appointment_id=appointment.id) }}" method="GET"
-                          style="display: inline;">
-                        <button type="submit">Update</button>
-                    </form>
-                    <form action="{{ url_for('delete_appointment', appointment_id=appointment.id) }}" method="POST"
-                          style="display: inline;">
-                        <button type="submit">Delete</button>
+                    <p>Name: {{ shop.name }}</p>
+                    <p>Address: {{ shop.address }}</p>
+                    <p>Phone: {{ shop.phone_number }}</p>
+                    <form action="{{ url_for('view_barbers', shop_id=shop.shop_id) }}" method="GET">
+                        <button type="submit">View Barbers and Services</button>
                     </form>
                 </li>
             {% endfor %}
         </ul>
-    {% else %}
-        <p>No upcoming appointments.</p>
     {% endif %}
 
 {% endblock %}
