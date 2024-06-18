@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -51,6 +51,16 @@ class Customer(User):
 
     def __init__(self, first_name, last_name, email, password):
         super().__init__(first_name, last_name, email, password, type='customer')
+
+
+class Appointment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    service_id = db.Column(db.Integer, db.ForeignKey('service.id', ondelete='CASCADE'), nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id', ondelete='CASCADE'), nullable=False)
+    barber_id = db.Column(db.Integer, db.ForeignKey('barber.id', ondelete='CASCADE'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
 
 
 class Availability(db.Model):
@@ -229,6 +239,89 @@ def barber_home():
                            services=services, availabilities=availabilities)
 
 
+@app.route('/book_appointment/<int:service_id>', methods=['GET'])
+@login_required
+def book_appointment(service_id):
+    service = Service.query.get_or_404(service_id)
+    barber = Barber.query.get(service.barber_id)
+    availabilities = Availability.query.filter_by(barber_id=barber.id).all()
+    available_days = []
+
+    for availability in availabilities:
+        availability_duration = (datetime.combine(datetime.min, availability.end_time) -
+                                 datetime.combine(datetime.min, availability.start_time)).seconds // 60
+        if availability_duration >= service.duration:
+            available_days.append(availability.date)
+
+    return render_template('book_appointment.html', service=service, barber=barber, available_days=available_days)
+
+
+@app.route('/choose_time/<int:service_id>/<date>', methods=['GET', 'POST'])
+@login_required
+def choose_time(service_id, date):
+    service = Service.query.get_or_404(service_id)
+    barber = Barber.query.get(service.barber_id)
+    availabilities = Availability.query.filter_by(barber_id=barber.id, date=date).all()
+    existing_appointments = Appointment.query.filter_by(barber_id=barber.id, date=date).all()
+
+    if request.method == 'POST':
+        start_time_str = request.form['start_time']
+        start_time = datetime.strptime(start_time_str, '%H:%M').time()
+        end_time = (datetime.combine(datetime.min, start_time) + timedelta(minutes=service.duration)).time()
+
+        # Check if the selected time is within the barber's availability and not overlapping with existing appointments
+        for availability in availabilities:
+            if start_time >= availability.start_time and end_time <= availability.end_time:
+                overlap = False
+                for appointment in existing_appointments:
+                    if (start_time < appointment.end_time and end_time > appointment.start_time):
+                        overlap = True
+                        break
+
+                if not overlap:
+                    new_appointment = Appointment(
+                        service_id=service.id,
+                        customer_id=current_user.id,
+                        barber_id=barber.id,
+                        date=datetime.strptime(date, '%Y-%m-%d').date(),
+                        start_time=start_time,
+                        end_time=end_time
+                    )
+                    db.session.add(new_appointment)
+                    db.session.commit()
+                    flash('Appointment confirmed.', 'success')
+                    return redirect(url_for('customer_home'))
+
+        flash('Selected time is not available. Please choose another time.', 'error')
+
+    return render_template('choose_time.html', service=service, barber=barber, date=date)
+
+
+@app.route('/api/availability/<int:barber_id>/<date>')
+@login_required
+def api_availability(barber_id, date):
+    availabilities = Availability.query.filter_by(barber_id=barber_id, date=date).all()
+    appointments = Appointment.query.filter_by(barber_id=barber_id, date=date).all()
+    events = []
+
+    for availability in availabilities:
+        events.append({
+            'title': 'Available',
+            'start': f"{availability.date}T{availability.start_time}",
+            'end': f"{availability.date}T{availability.end_time}"
+        })
+
+    for appointment in appointments:
+        events.append({
+            'title': 'Booked',
+            'start': f"{appointment.date}T{appointment.start_time}",
+            'end': f"{appointment.date}T{appointment.end_time}",
+            'color': 'red'  # Optional: to distinguish booked slots
+        })
+
+    return jsonify(events)
+
+
 @app.route('/new_barbershop', methods=['POST'])
 @login_required
 def new_barbershop():
@@ -277,6 +370,16 @@ def update_barbershop(shop_id):
             return redirect(url_for('update_barbershop', shop_id=shop_id))
 
     return render_template('update_barbershop.html', shop=shop)
+
+
+@app.route('/barber_calendar')
+@login_required
+def barber_calendar():
+    if current_user.type != 'barber':
+        flash('You do not have access to this page.', 'error')
+        return redirect(url_for('customer_home'))
+
+    return render_template('barber_calendar.html', barber_id=current_user.id)
 
 
 @app.route('/delete_barbershop/<int:shop_id>', methods=['POST'])
