@@ -42,6 +42,7 @@ class User(db.Model, UserMixin):
 
 
 class Appointment(db.Model):
+    __tablename__ = 'appointment'
     id = db.Column(db.Integer, primary_key=True)
     barber_id = db.Column(db.Integer, db.ForeignKey('barber.id', ondelete='CASCADE'), nullable=False)
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id', ondelete='CASCADE'), nullable=False)
@@ -49,6 +50,22 @@ class Appointment(db.Model):
     date = db.Column(db.Date, nullable=False)
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
+
+    barber = db.relationship('Barber', backref='appointments', lazy=True)
+
+
+class Barber(User):
+    __tablename__ = 'barber'
+    id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), primary_key=True)
+    shop_id = db.Column(db.Integer, db.ForeignKey('barbershop.shop_id', ondelete='SET NULL'), nullable=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'barber',
+    }
+
+    def __init__(self, first_name, last_name, email, password, shopid=None):
+        super().__init__(first_name, last_name, email, password, type='barber')
+        self.shop_id = shopid
 
 
 class Customer(User):
@@ -75,20 +92,6 @@ class Availability(db.Model):
         self.date = date
         self.start_time = start_time
         self.end_time = end_time
-
-
-class Barber(User):
-    __tablename__ = 'barber'
-    id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), primary_key=True)
-    shop_id = db.Column(db.Integer, db.ForeignKey('barbershop.shop_id', ondelete='SET NULL'), nullable=True)
-
-    __mapper_args__ = {
-        'polymorphic_identity': 'barber',
-    }
-
-    def __init__(self, first_name, last_name, email, password, shopid=None):
-        super().__init__(first_name, last_name, email, password, type='barber')
-        self.shop_id = shopid
 
 
 class Barbershop(db.Model):
@@ -209,7 +212,15 @@ def signin():
 @app.route('/customer_home')
 @login_required
 def customer_home():
-    return render_template('customer_home.html')
+    if current_user.type != 'customer':
+        flash('Access denied.', 'error')
+        return redirect(url_for('index'))
+
+    # Query appointments with barber details
+    appointments = db.session.query(Appointment, Barber).join(Barber, Appointment.barber_id == Barber.id).filter(
+        Appointment.customer_id == current_user.id).all()
+
+    return render_template('customer_home.html', appointments=appointments)
 
 
 @app.route('/customer_search_barbershop', methods=['GET'])
@@ -217,7 +228,9 @@ def customer_home():
 def customer_search_barbershop():
     search_query = request.args.get('search')
     barbershops = Barbershop.query.filter(Barbershop.name.contains(search_query)).all()
-    return render_template('customer_home.html', barbershops=barbershops)
+    appointments = db.session.query(Appointment, Barber).join(Barber, Appointment.barber_id == Barber.id).filter(
+        Appointment.customer_id == current_user.id).all()
+    return render_template('customer_home.html', appointments=appointments, barbershops=barbershops)
 
 
 @app.route('/barber_home')

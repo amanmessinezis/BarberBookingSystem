@@ -3,6 +3,20 @@
 {% block content %}
     <h1>Welcome, {{ current_user.first_name }}</h1>
 
+    <h2>Your Appointments</h2>
+
+    {% if appointments %}
+        <ul>
+            {% for appointment, barber in appointments %}
+                <li>
+                    <p>Barber: {{ barber.first_name }} {{ barber.last_name }}</p>
+                    <p>Date: {{ appointment.date }}</p>
+                    <p>Time: {{ appointment.start_time }} - {{ appointment.end_time }}</p>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
     <h2>Search for Barbershops</h2>
     <form action="{{ url_for('customer_search_barbershop') }}" method="GET">
         <label for="search">Search:</label>
