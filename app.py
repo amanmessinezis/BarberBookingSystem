@@ -516,6 +516,76 @@ def view_barbers(shop_id):
                            barber_services=barber_services)
 
 
+@app.route('/update_appointment/<int:appointment_id>', methods=['GET', 'POST'])
+@login_required
+def update_appointment(appointment_id):
+    appointment = Appointment.query.get_or_404(appointment_id)
+    if appointment.customer_id != current_user.id:
+        flash('You do not have permission to update this appointment.', 'error')
+        return redirect(url_for('customer_home'))
+
+    if request.method == 'POST':
+        date_str = request.form['date']
+        start_time_str = request.form['start_time']
+        service = Service.query.get(appointment.service_id)
+        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        start_time = datetime.strptime(start_time_str, '%H:%M').time()
+        end_time = (datetime.combine(datetime.min, start_time) + timedelta(minutes=service.duration)).time()
+
+        # Check if the selected time is within the barber's availability
+        availabilities = Availability.query.filter_by(barber_id=appointment.barber_id, date=date).all()
+        is_within_availability = False
+        for availability in availabilities:
+            if start_time >= availability.start_time and end_time <= availability.end_time:
+                is_within_availability = True
+                break
+
+        if not is_within_availability:
+            flash('Selected time is not within the barber\'s availability. Please choose another time.', 'error')
+            return render_template('update_appointment.html', appointment=appointment)
+
+        # Check if the selected time overlaps with any existing appointments
+        appointments = Appointment.query.filter_by(barber_id=appointment.barber_id, date=date).all()
+        for appt in appointments:
+            if appt.id != appointment.id and not (end_time <= appt.start_time or start_time >= appt.end_time):
+                flash('Selected time overlaps with an existing appointment. Please choose another time.', 'error')
+                return render_template('update_appointment.html', appointment=appointment)
+
+        appointment.date = date
+        appointment.start_time = start_time
+        appointment.end_time = end_time
+
+        try:
+            db.session.commit()
+            flash('Appointment updated successfully.', 'success')
+            return redirect(url_for('customer_home'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'There was an issue updating the appointment: {e}', 'error')
+            return redirect(url_for('update_appointment', appointment_id=appointment_id))
+
+    return render_template('update_appointment.html', appointment=appointment)
+
+
+@app.route('/delete_appointment/<int:appointment_id>', methods=['POST'])
+@login_required
+def delete_appointment(appointment_id):
+    appointment = Appointment.query.get_or_404(appointment_id)
+    if appointment.customer_id != current_user.id:
+        flash('You do not have permission to delete this appointment.', 'error')
+        return redirect(url_for('customer_home'))
+
+    try:
+        db.session.delete(appointment)
+        db.session.commit()
+        flash('Appointment deleted successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'There was an issue deleting the appointment: {e}', 'error')
+
+    return redirect(url_for('customer_home'))
+
+
 @app.route('/leave_barbershop/<int:shop_id>', methods=['POST'])
 @login_required
 def leave_barbershop(shop_id):

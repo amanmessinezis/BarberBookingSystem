@@ -12,6 +12,14 @@
                     <p>Barber: {{ barber.first_name }} {{ barber.last_name }}</p>
                     <p>Date: {{ appointment.date }}</p>
                     <p>Time: {{ appointment.start_time }} - {{ appointment.end_time }}</p>
+                    <form action="{{ url_for('update_appointment', appointment_id=appointment.id) }}" method="GET"
+                          style="display: inline;">
+                        <button type="submit">Update</button>
+                    </form>
+                    <form action="{{ url_for('delete_appointment', appointment_id=appointment.id) }}" method="POST"
+                          style="display: inline;">
+                        <button type="submit">Delete</button>
+                    </form>
                 </li>
             {% endfor %}
         </ul>
