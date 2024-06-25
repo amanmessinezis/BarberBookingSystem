@@ -388,22 +388,6 @@ def choose_time(service_id, date):
     return render_template('choose_time.html', service=service, barber=barber, date=date)
 
 
-@app.route('/api/availability/<int:barber_id>/<date>')
-@login_required
-def api_availability(barber_id, date):
-    availabilities = Availability.query.filter_by(barber_id=barber_id, date=date).all()
-    events = []
-
-    for availability in availabilities:
-        events.append({
-            'title': 'Available',
-            'start': f"{availability.date}T{availability.start_time}",
-            'end': f"{availability.date}T{availability.end_time}"
-        })
-
-    return jsonify(events)
-
-
 @app.route('/api/availability_and_appointments/<int:barber_id>/<date>')
 @login_required
 def api_availability_and_appointments(barber_id, date):
@@ -700,22 +684,6 @@ def delete_availability(availability_id):
         flash(f'There was an issue deleting the availability: {e}', 'error')
 
     return redirect(url_for('barber_home'))
-
-
-@app.route('/api/events')
-@login_required
-def get_events():
-    availabilities = Availability.query.filter_by(barber_id=current_user.id).all()
-    events = []
-
-    for availability in availabilities:
-        events.append({
-            'title': 'Available',
-            'start': f"{availability.date}T{availability.start_time}",
-            'end': f"{availability.date}T{availability.end_time}"
-        })
-
-    return jsonify(events)
 
 
 @app.route('/calendar')

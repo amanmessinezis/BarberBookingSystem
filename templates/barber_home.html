@@ -8,6 +8,7 @@
         <p>Name: {{ barbershop.name }}</p>
         <p>Address: {{ barbershop.address }}</p>
         <p>Phone: {{ barbershop.phone_number }}</p>
+        {#        Barbers that create barbershops can update and delete it#}
         {% if barbershop.creator_id == current_user.id %}
             <form action="{{ url_for('update_barbershop', shop_id=barbershop.shop_id) }}" method="GET">
                 <button type="submit">Update Barbershop</button>
@@ -16,6 +17,7 @@
                 <button type="submit">Delete Barbershop</button>
             </form>
         {% else %}
+            {#            Barbers that join barbershops can leave it#}
             <form action="{{ url_for('leave_barbershop', shop_id=barbershop.shop_id) }}" method="POST">
                 <button type="submit">Leave Barbershop</button>
             </form>
@@ -63,6 +65,7 @@
                 </a>
                 <form action="{{ url_for('delete_service', service_id=service.id) }}" method="POST"
                       style="display: inline;">
+                    {#                    Inline so boxes could be beside each other rather than stacked#}
                     <button type="submit">Delete</button>
                 </form>
             </li>
@@ -73,7 +76,8 @@
     <ul>
         {% for availability in availabilities %}
             <li class="availability-item">
-                <span>{{ availability.date }} from {{ availability.start_time.strftime('%H:%M') }} to {{ availability.end_time.strftime('%H:%M') }}</span>
+                <span>{{ availability.date }} from {{ availability.start_time.strftime('%H:%M') }} to
+                    {{ availability.end_time.strftime('%H:%M') }}</span>
                 <a href="{{ url_for('update_availability', availability_id=availability.id) }}">
                     <button>Update</button>
                 </a>
@@ -86,6 +90,7 @@
 
     </ul>
 
+    {#    You cannot search for barbershops to join if you already created one#}
     {% if not current_user.shop_id %}
         <h2>Search for a Barbershop</h2>
         <form action="{{ url_for('search_barbershop') }}" method="GET">
