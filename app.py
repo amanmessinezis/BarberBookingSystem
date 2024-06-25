@@ -790,13 +790,6 @@ def save_service():
     return redirect(url_for('barber_home'))
 
 
-@app.route('/services')
-@login_required
-def services():
-    services = Service.query.filter_by(barber_id=current_user.id).all()
-    return render_template('services.html', services=services)
-
-
 @app.route('/logout', methods=['POST'])
 @login_required
 def logout():
