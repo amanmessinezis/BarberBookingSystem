@@ -19,6 +19,7 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'signin'
 
 
+# User model for barber and customer types
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
@@ -41,6 +42,7 @@ class User(db.Model, UserMixin):
         self.type = type
 
 
+# Appointment model for appointment details made by customers
 class Appointment(db.Model):
     __tablename__ = 'appointment'
     id = db.Column(db.Integer, primary_key=True)
@@ -54,6 +56,7 @@ class Appointment(db.Model):
     barber = db.relationship('Barber', backref='appointments', lazy=True)
 
 
+# Inherited by User model
 class Barber(User):
     __tablename__ = 'barber'
     id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), primary_key=True)
@@ -68,6 +71,7 @@ class Barber(User):
         self.shop_id = shopid
 
 
+# Inherited by User model
 class Customer(User):
     __tablename__ = 'customer'
     id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), primary_key=True)
@@ -80,6 +84,7 @@ class Customer(User):
         super().__init__(first_name, last_name, email, password, type='customer')
 
 
+# Store barber availability
 class Availability(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     barber_id = db.Column(db.Integer, db.ForeignKey('barber.id', ondelete='CASCADE'), nullable=False)
@@ -94,6 +99,7 @@ class Availability(db.Model):
         self.end_time = end_time
 
 
+# Store barbershop details
 class Barbershop(db.Model):
     __tablename__ = 'barbershop'
     shop_id = db.Column(db.Integer, primary_key=True)
@@ -109,6 +115,7 @@ class Barbershop(db.Model):
         self.creator_id = creator_id
 
 
+# Services provided by barbers
 class Service(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     barber_id = db.Column(db.Integer, db.ForeignKey('barber.id', ondelete='CASCADE'), nullable=False)
@@ -128,10 +135,12 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+# Create all database tables
 with app.app_context():
     db.create_all()
 
 
+# First page. Create an account
 @app.route('/', methods=['POST', 'GET'])
 def index():
     if current_user.is_authenticated:
@@ -181,6 +190,7 @@ def index():
         return render_template('index.html')
 
 
+# Sign in page for both barbers and customers
 @app.route('/signin', methods=['POST', 'GET'])
 def signin():
     if current_user.is_authenticated:
@@ -209,6 +219,7 @@ def signin():
         return render_template('signin.html')
 
 
+# Customer home page that shows their appointment details and option to book an appointment
 @app.route('/customer_home')
 @login_required
 def customer_home():
@@ -223,6 +234,7 @@ def customer_home():
     return render_template('customer_home.html', appointments=appointments)
 
 
+# Variation of customer home page which shows results of barbershops via search bar
 @app.route('/customer_search_barbershop', methods=['GET'])
 @login_required
 def customer_search_barbershop():
@@ -233,6 +245,7 @@ def customer_search_barbershop():
     return render_template('customer_home.html', appointments=appointments, barbershops=barbershops)
 
 
+# Barber home page
 @app.route('/barber_home')
 @login_required
 def barber_home():
@@ -252,6 +265,7 @@ def barber_home():
                            services=services, availabilities=availabilities)
 
 
+# Page reached via barber_home. Can create a new barbershop from here
 @app.route('/new_barbershop', methods=['POST'])
 @login_required
 def new_barbershop():
@@ -277,6 +291,7 @@ def new_barbershop():
     return redirect(url_for('barber_home'))
 
 
+# Update an existing barbershop
 @app.route('/update_barbershop/<int:shop_id>', methods=['GET', 'POST'])
 @login_required
 def update_barbershop(shop_id):
@@ -302,6 +317,7 @@ def update_barbershop(shop_id):
     return render_template('update_barbershop.html', shop=shop)
 
 
+# Delete an existing barbershop
 @app.route('/delete_barbershop/<int:shop_id>', methods=['POST'])
 @login_required
 def delete_barbershop(shop_id):
@@ -324,6 +340,7 @@ def delete_barbershop(shop_id):
     return redirect(url_for('barber_home'))
 
 
+# Booking appointment page
 @app.route('/book_appointment/<int:service_id>', methods=['GET'])
 @login_required
 def book_appointment(service_id):
@@ -341,6 +358,7 @@ def book_appointment(service_id):
     return render_template('book_appointment.html', service=service, barber=barber, available_days=available_days)
 
 
+# Follow up on book_appointment. Pick a time on barber's schedule
 @app.route('/choose_time/<int:service_id>/<date>', methods=['GET', 'POST'])
 @login_required
 def choose_time(service_id, date):
@@ -388,6 +406,7 @@ def choose_time(service_id, date):
     return render_template('choose_time.html', service=service, barber=barber, date=date)
 
 
+# Used by calendar in choose_time to highlight barber's availability
 @app.route('/api/availability_and_appointments/<int:barber_id>/<date>')
 @login_required
 def api_availability_and_appointments(barber_id, date):
@@ -414,6 +433,7 @@ def api_availability_and_appointments(barber_id, date):
     return jsonify(events)
 
 
+# Barber can join barbershop if he doesn't already have one
 @app.route('/join_barbershop/<int:shop_id>', methods=['POST'])
 @login_required
 def join_barbershop(shop_id):
@@ -434,15 +454,7 @@ def join_barbershop(shop_id):
     return redirect(url_for('barber_home'))
 
 
-@app.route('/barber_calendar')
-@login_required
-def barber_calendar():
-    if current_user.type != 'barber':
-        flash('Access denied.', 'error')
-        return redirect(url_for('index'))
-    return render_template('calendar.html')
-
-
+# Used by calendar in calendar.html. Find barber's availability and apply to calendar
 @app.route('/api/barber_events')
 @login_required
 def api_barber_events():
@@ -472,6 +484,7 @@ def api_barber_events():
     return jsonify(events)
 
 
+# Search result for barbershops made by sole barbers
 @app.route('/search_barbershop', methods=['GET'])
 @login_required
 def search_barbershop():
@@ -485,6 +498,7 @@ def search_barbershop():
     return render_template('barber_home.html', barbershops=barbershops)
 
 
+# Customer views all barbers in barbershop that's been selected
 @app.route('/view_barbers/<int:shop_id>', methods=['GET'])
 @login_required
 def view_barbers(shop_id):
@@ -500,6 +514,7 @@ def view_barbers(shop_id):
                            barber_services=barber_services)
 
 
+# Customer can update existing appointment
 @app.route('/update_appointment/<int:appointment_id>', methods=['GET', 'POST'])
 @login_required
 def update_appointment(appointment_id):
@@ -551,6 +566,7 @@ def update_appointment(appointment_id):
     return render_template('update_appointment.html', appointment=appointment)
 
 
+# Customer can delete existing appointment
 @app.route('/delete_appointment/<int:appointment_id>', methods=['POST'])
 @login_required
 def delete_appointment(appointment_id):
@@ -570,6 +586,7 @@ def delete_appointment(appointment_id):
     return redirect(url_for('customer_home'))
 
 
+# Barber can leave barbershop (except the creator)
 @app.route('/leave_barbershop/<int:shop_id>', methods=['POST'])
 @login_required
 def leave_barbershop(shop_id):
@@ -594,6 +611,7 @@ def leave_barbershop(shop_id):
     return redirect(url_for('barber_home'))
 
 
+# Barber can update their service details
 @app.route('/update_service/<int:service_id>', methods=['GET', 'POST'])
 @login_required
 def update_service(service_id):
@@ -619,6 +637,7 @@ def update_service(service_id):
     return render_template('update_service.html', service=service)
 
 
+# Barber can delete a service
 @app.route('/delete_service/<int:service_id>', methods=['POST'])
 @login_required
 def delete_service(service_id):
@@ -638,6 +657,7 @@ def delete_service(service_id):
     return redirect(url_for('barber_home'))
 
 
+# Barber can update their availability
 @app.route('/update_availability/<int:availability_id>', methods=['GET', 'POST'])
 @login_required
 def update_availability(availability_id):
@@ -667,6 +687,7 @@ def update_availability(availability_id):
     return render_template('update_availability.html', availability=availability)
 
 
+# Barber can delete availability
 @app.route('/delete_availability/<int:availability_id>', methods=['POST'])
 @login_required
 def delete_availability(availability_id):
@@ -686,18 +707,21 @@ def delete_availability(availability_id):
     return redirect(url_for('barber_home'))
 
 
+# View calendar
 @app.route('/calendar')
 @login_required
 def calendar():
     return render_template('calendar.html')
 
 
+# Add availability
 @app.route('/add_availability')
 @login_required
 def add_availability():
     return render_template('add_availability.html')
 
 
+# API to save availability. Taken back to barber_home
 @app.route('/save_availability', methods=['POST'])
 @login_required
 def save_availability():
@@ -727,12 +751,14 @@ def save_availability():
     return redirect(url_for('barber_home'))
 
 
+# Barber can add service
 @app.route('/add_service')
 @login_required
 def add_service():
     return render_template('add_service.html')
 
 
+# API to save barber service
 @app.route('/save_service', methods=['POST'])
 @login_required
 def save_service():
@@ -758,6 +784,7 @@ def save_service():
     return redirect(url_for('barber_home'))
 
 
+# Logout
 @app.route('/logout', methods=['POST'])
 @login_required
 def logout():
