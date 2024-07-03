@@ -10,19 +10,20 @@
             {% for appointment, barber in appointments %}
                 <li>
                     <p>Barber: {{ barber.first_name }} {{ barber.last_name }}</p>
+                    <p>Service: {{ appointment.service.name }}</p>
                     <p>Date: {{ appointment.date }}</p>
                     <p>Time: {{ appointment.start_time }} - {{ appointment.end_time }}</p>
-                    <form action="{{ url_for('update_appointment', appointment_id=appointment.id) }}" method="GET"
-                          style="display: inline;">
-                        <button type="submit">Update</button>
+                    <form action="{{ url_for('update_appointment', appointment_id=appointment.id) }}" method="GET">
+                        <button type="submit">Update Appointment</button>
                     </form>
-                    <form action="{{ url_for('delete_appointment', appointment_id=appointment.id) }}" method="POST"
-                          style="display: inline;">
-                        <button type="submit">Delete</button>
+                    <form action="{{ url_for('delete_appointment', appointment_id=appointment.id) }}" method="POST">
+                        <button type="submit">Delete Appointment</button>
                     </form>
                 </li>
             {% endfor %}
         </ul>
+    {% else %}
+        <p>No appointments found.</p>
     {% endif %}
 
     <h2>Search for Barbershops</h2>
@@ -47,5 +48,4 @@
             {% endfor %}
         </ul>
     {% endif %}
-
 {% endblock %}

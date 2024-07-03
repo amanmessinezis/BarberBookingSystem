@@ -43,17 +43,20 @@ class User(db.Model, UserMixin):
 
 
 # Appointment model for appointment details made by customers
+# Updated Appointment model
 class Appointment(db.Model):
     __tablename__ = 'appointment'
     id = db.Column(db.Integer, primary_key=True)
     barber_id = db.Column(db.Integer, db.ForeignKey('barber.id', ondelete='CASCADE'), nullable=False)
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id', ondelete='CASCADE'), nullable=False)
+    service_id = db.Column(db.Integer, db.ForeignKey('service.id', ondelete='CASCADE'), nullable=False)
     customer_name = db.Column(db.String(150), nullable=False)
     date = db.Column(db.Date, nullable=False)
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
 
     barber = db.relationship('Barber', backref='appointments', lazy=True)
+    service = db.relationship('Service', backref='appointments', lazy=True)
 
 
 # Inherited by User model
@@ -393,6 +396,7 @@ def choose_time(service_id, date):
         appointment = Appointment(
             barber_id=barber.id,
             customer_id=current_user.id,
+            service_id=service.id,
             customer_name=f"{current_user.first_name} {current_user.last_name}",
             date=datetime.strptime(date, '%Y-%m-%d').date(),
             start_time=start_time,
@@ -524,33 +528,32 @@ def update_appointment(appointment_id):
         return redirect(url_for('customer_home'))
 
     if request.method == 'POST':
-        date_str = request.form['date']
-        start_time_str = request.form['start_time']
-        service = Service.query.get(appointment.service_id)
-        date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        start_time = datetime.strptime(start_time_str, '%H:%M').time()
-        end_time = (datetime.combine(datetime.min, start_time) + timedelta(minutes=service.duration)).time()
+        start_time = datetime.strptime(request.form['start_time'], '%H:%M').time()
+        end_time = (datetime.combine(datetime.min, start_time) + timedelta(minutes=appointment.service.duration)).time()
 
         # Check if the selected time is within the barber's availability
-        availabilities = Availability.query.filter_by(barber_id=appointment.barber_id, date=date).all()
-        is_within_availability = False
-        for availability in availabilities:
-            if start_time >= availability.start_time and end_time <= availability.end_time:
-                is_within_availability = True
-                break
+        availabilities = Availability.query.filter_by(barber_id=appointment.barber_id, date=appointment.date).all()
+        is_within_availability = any(
+            availability.start_time <= start_time and availability.end_time >= end_time
+            for availability in availabilities
+        )
 
         if not is_within_availability:
             flash('Selected time is not within the barber\'s availability. Please choose another time.', 'error')
             return render_template('update_appointment.html', appointment=appointment)
 
         # Check if the selected time overlaps with any existing appointments
-        appointments = Appointment.query.filter_by(barber_id=appointment.barber_id, date=date).all()
-        for appt in appointments:
-            if appt.id != appointment.id and not (end_time <= appt.start_time or start_time >= appt.end_time):
-                flash('Selected time overlaps with an existing appointment. Please choose another time.', 'error')
-                return render_template('update_appointment.html', appointment=appointment)
+        existing_appointments = Appointment.query.filter_by(barber_id=appointment.barber_id,
+                                                            date=appointment.date).all()
+        is_time_conflict = any(
+            not (end_time <= existing_appointment.start_time or start_time >= existing_appointment.end_time)
+            for existing_appointment in existing_appointments if existing_appointment.id != appointment_id
+        )
 
-        appointment.date = date
+        if is_time_conflict:
+            flash('Selected time overlaps with an existing appointment. Please choose another time.', 'error')
+            return render_template('update_appointment.html', appointment=appointment)
+
         appointment.start_time = start_time
         appointment.end_time = end_time
 
@@ -561,7 +564,6 @@ def update_appointment(appointment_id):
         except Exception as e:
             db.session.rollback()
             flash(f'There was an issue updating the appointment: {e}', 'error')
-            return redirect(url_for('update_appointment', appointment_id=appointment_id))
 
     return render_template('update_appointment.html', appointment=appointment)
 
