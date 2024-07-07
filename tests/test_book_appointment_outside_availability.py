@@ -1,8 +1,9 @@
-import os
-import pytest
-from app import app, db, User, Barber, Customer, Barbershop, Service, Availability
-from werkzeug.security import generate_password_hash
 from datetime import datetime, time
+
+import pytest
+from werkzeug.security import generate_password_hash
+
+from app import app, db, Barber, Customer, Barbershop, Service, Availability
 
 
 @pytest.fixture
