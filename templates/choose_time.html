@@ -4,7 +4,7 @@
     <h1>Choose Time for {{ service.name }} on {{ date }}</h1>
     <p>Barber: {{ barber.first_name }} {{ barber.last_name }}</p>
     <p>Duration: {{ service.duration }} minutes</p>
-    <p>Price: ${{ service.price }}</p>
+    <p>Price: £{{ service.price }}</p>
 
     <form id="booking-form" action="{{ url_for('choose_time', service_id=service.id, date=date) }}" method="POST">
         <label for="start_time">Start Time:</label>
