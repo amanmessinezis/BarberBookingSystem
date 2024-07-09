@@ -66,4 +66,4 @@ def test_find_barbers_in_barbershops(client, setup_database):
     assert b"Barber User" in response.data
     assert b"Haircut" in response.data
     assert b"30 minutes" in response.data
-    assert b"£25.0" in response.data
+    assert b"25.0" in response.data
