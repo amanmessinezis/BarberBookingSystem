@@ -43,7 +43,7 @@ def test_signin_customer_account(client):
         user_type="customer"
     ), follow_redirects=True)
 
-    # Now, sign into the customer account
+    # Now, sign in to the customer account
     response = client.post('/signin', data=dict(
         email="customer@example.com",
         password="password"
