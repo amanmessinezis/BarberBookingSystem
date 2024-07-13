@@ -1,8 +1,33 @@
 /* Add your styles here */
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
 .navbar {
     width: 100%;
-    background-color: #333;
+    background-color: #007bff;
     overflow: auto;
+    padding: 10px 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-left .navbar-logo {
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.navbar-left .navbar-logo:hover {
+    color: #ddd;
 }
 
 .navbar-right {
@@ -10,50 +35,116 @@
 }
 
 .navbar button {
-    padding: 12px;
+    padding: 10px 20px;
     color: white;
-    background-color: #333;
+    background-color: #007bff;
     border: none;
     cursor: pointer;
-    font-size: 17px;
+    font-size: 16px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
 }
 
 .navbar button:hover {
-    background-color: #ddd;
-    color: black;
+    background-color: #0056b3;
 }
 
 .container {
     padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
 }
 
-h1, h2 {
+h1, h2, h3 {
+    color: #007bff;
+}
+
+form {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+form label {
+    display: block;
+    margin-bottom: 5px;
     color: #333;
 }
 
-.service-item {
+form input, form select, form button {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+form button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+form button:hover {
+    background-color: #218838;
+}
+
+.flash-messages {
+    margin-bottom: 20px;
+}
+
+.flash-messages .flash {
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    position: relative;
+    transition: opacity 0.3s;
+}
+
+.flash-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.flash-error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.flash .close {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.service-item, .availability-item {
+    background-color: white;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
     display: flex;
+    justify-content: space-between;
     align-items: center;
 }
 
-.service-item span {
-    margin-right: 10px;
+.service-item button, .availability-item button {
+    margin-left: 10px;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
 
-.service-item button {
-    margin-left: 5px;
+.service-item button:hover, .availability-item button:hover {
+    background-color: #0056b3;
 }
-
-.availability-item {
-    display: flex;
-    align-items: center;
-}
-
-.availability-item span {
-    margin-right: 10px;
-}
-
-.availability-item button {
-    margin-left: 5px;
-}
-
