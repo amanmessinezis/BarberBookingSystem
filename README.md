@@ -43,7 +43,9 @@ BarberBookingSystem/
 │   ├── test_find_barbers_in_barbershops.py
 │   ├── test_join_barbershop.py
 │   └── test_update_appointment_time.py
-└── app.py                      # Main application file
+├── app.py                      # Main application file
+├── README.md                   # This README file
+└── requirements.txt            # Requirements file
 ```
 
 ## Installation and Testing Instructions
