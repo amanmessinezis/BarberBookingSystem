@@ -666,15 +666,15 @@ def update_availability(availability_id):
         return redirect(url_for('barber_home'))
 
     if request.method == 'POST':
-        availability.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
-        # Ensure seconds are stripped from the time string before parsing
-        start_time_str = request.form['start_time']
-        end_time_str = request.form['end_time']
-        availability.start_time = datetime.strptime(start_time_str,
-                                                    '%H:%M:%S' if ':' in start_time_str else '%H:%M').time()
-        availability.end_time = datetime.strptime(end_time_str, '%H:%M:%S' if ':' in end_time_str else '%H:%M').time()
-
         try:
+            date_str = request.form['date']
+            start_time_str = request.form['start_time'] + ':00'
+            end_time_str = request.form['end_time'] + ':00'
+
+            availability.date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            availability.start_time = datetime.strptime(start_time_str, '%H:%M:%S').time()
+            availability.end_time = datetime.strptime(end_time_str, '%H:%M:%S').time()
+
             db.session.commit()
             flash('Availability updated successfully.', 'success')
             return redirect(url_for('barber_home'))
