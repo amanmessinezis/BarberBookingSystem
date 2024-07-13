@@ -1,30 +1,40 @@
 {% extends 'base.html' %}
 
 {% block content %}
+    <!-- Page title -->
     <h1>Create an Account</h1>
+    <!-- Form to create a new account, posts data to the root route -->
     <form action="/" method="POST">
+        <!-- First name input field -->
         <label for="first_name">First Name:</label>
         <input type="text" id="first_name" name="first_name" required>
 
+        <!-- Last name input field -->
         <label for="last_name">Last Name:</label>
         <input type="text" id="last_name" name="last_name" required>
 
+        <!-- Email address input field -->
         <label for="email">Email Address:</label>
         <input type="email" id="email" name="email" required>
 
+        <!-- Password input field -->
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" required>
 
+        <!-- Confirm password input field -->
         <label for="confirm_password">Confirm Password:</label>
         <input type="password" id="confirm_password" name="confirm_password" required>
 
+        <!-- User type selection dropdown -->
         <label for="user_type">I am a:</label>
         <select id="user_type" name="user_type" required>
             <option value="customer">Customer</option>
             <option value="barber">Barber</option>
         </select>
 
+        <!-- Submit button to create account -->
         <button type="submit">Submit</button>
     </form>
+    <!-- Link to sign in page for existing users -->
     <p>Already have an account? <a href="{{ url_for('signin') }}">Sign in here</a></p>
 {% endblock %}

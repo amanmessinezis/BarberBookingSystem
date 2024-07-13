@@ -1,17 +1,23 @@
 {% extends 'base.html' %}
 
 {% block content %}
+    <!-- Page title -->
     <h1>Update Availability</h1>
+    <!-- Form to update availability, posts data to update_availability route -->
     <form action="{{ url_for('update_availability', availability_id=availability.id) }}" method="POST">
+        <!-- Date input field pre-filled with current date -->
         <label for="date">Date:</label>
         <input type="date" id="date" name="date" value="{{ availability.date }}" required><br><br>
 
+        <!-- Start time input field pre-filled with current start time -->
         <label for="start_time">Start Time:</label>
         <input type="time" id="start_time" name="start_time" value="{{ availability.start_time }}" required><br><br>
 
+        <!-- End time input field pre-filled with current end time -->
         <label for="end_time">End Time:</label>
         <input type="time" id="end_time" name="end_time" value="{{ availability.end_time }}" required><br><br>
 
+        <!-- Submit button to update availability -->
         <button type="submit">Update Availability</button>
     </form>
 {% endblock %}

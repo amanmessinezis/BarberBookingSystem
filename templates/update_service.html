@@ -1,17 +1,23 @@
 {% extends 'base.html' %}
 
 {% block content %}
+    <!-- Page title -->
     <h1>Update Service</h1>
+    <!-- Form to update service details, posts data to update_service route -->
     <form action="{{ url_for('update_service', service_id=service.id) }}" method="POST">
+        <!-- Service name input field pre-filled with current name -->
         <label for="name">Service Name:</label>
         <input type="text" id="name" name="name" value="{{ service.name }}" required><br><br>
 
+        <!-- Duration input field pre-filled with current duration -->
         <label for="duration">Duration (minutes):</label>
         <input type="number" id="duration" name="duration" value="{{ service.duration }}" required><br><br>
 
+        <!-- Price input field pre-filled with current price -->
         <label for="price">Price (£):</label>
         <input type="number" step="0.01" id="price" name="price" min="0" value="{{ service.price }}" required><br><br>
 
+        <!-- Submit button to update service details -->
         <button type="submit">Update Service</button>
     </form>
 {% endblock %}

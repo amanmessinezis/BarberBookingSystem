@@ -1,10 +1,14 @@
 {% extends 'base.html' %}
 
 {% block content %}
+    <!-- Page title -->
     <h1>Update Appointment</h1>
+    <!-- Form to update appointment, posts data to update_appointment route -->
     <form action="{{ url_for('update_appointment', appointment_id=appointment.id) }}" method="POST">
+        <!-- Start time input field pre-filled with current start time -->
         <label for="start_time">Start Time:</label>
         <input type="time" id="start_time" name="start_time" value="{{ appointment.start_time }}" required><br><br>
+        <!-- Submit button to update appointment -->
         <button type="submit">Update</button>
     </form>
 {% endblock %}

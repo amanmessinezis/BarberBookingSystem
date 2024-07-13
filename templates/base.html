@@ -11,9 +11,12 @@
     <link rel="icon" href="{{ url_for('static', filename='scissors.png') }}" type="image/png">
 </head>
 <body>
+<!-- Navbar -->
 <div class="navbar">
     <div class="navbar-left">
+        <!-- Logo and title, conditional navigation based on user type -->
         <a href="
+
                 {% if current_user.is_authenticated %}{% if current_user.type == 'barber' %}{{ url_for('barber_home') }}{% else %}{{ url_for('customer_home') }}{% endif %}{% else %}{{ url_for('index') }}{% endif %}"
            class="navbar-logo">
             <img src="{{ url_for('static', filename='scissors.png') }}" alt="Barber Booking System" class="navbar-icon">
@@ -22,13 +25,16 @@
     </div>
     {% if current_user.is_authenticated %}
         <div class="navbar-right">
+            <!-- Sign out form -->
             <form action="{{ url_for('logout') }}" method="POST">
                 <button type="submit">Sign Out</button>
             </form>
         </div>
     {% endif %}
 </div>
+<!-- Main content container -->
 <div class="container">
+    <!-- Flash messages for user feedback -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <div class="flash-messages">
@@ -41,6 +47,7 @@
             </div>
         {% endif %}
     {% endwith %}
+    <!-- Block for page-specific content -->
     {% block content %}
     {% endblock %}
 </div>

@@ -1,19 +1,24 @@
 {% extends 'base.html' %}
 
 {% block content %}
+    <!-- Page title -->
     <h1>Choose Time for {{ service.name }} on {{ date }}</h1>
+    <!-- Display barber's name, service duration, and price -->
     <p>Barber: {{ barber.first_name }} {{ barber.last_name }}</p>
     <p>Duration: {{ service.duration }} minutes</p>
     <p>Price: £{{ service.price }}</p>
 
+    <!-- Form to choose time for the appointment -->
     <form id="booking-form" action="{{ url_for('choose_time', service_id=service.id, date=date) }}" method="POST">
         <label for="start_time">Start Time:</label>
         <input type="time" id="start_time" name="start_time" required><br><br>
         <button type="submit">Book Appointment</button>
     </form>
 
+    <!-- Calendar div element where FullCalendar will be rendered -->
     <div id='calendar'></div>
 
+    <!-- Script to initialize FullCalendar and load events from the server -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var calendarEl = document.getElementById('calendar');

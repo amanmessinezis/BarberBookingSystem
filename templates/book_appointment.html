@@ -1,16 +1,20 @@
 {% extends 'base.html' %}
 
 {% block content %}
+    <!-- Page title -->
     <h1>Book Appointment for {{ service.name }}</h1>
+    <!-- Display barber's name, service duration, and price -->
     <p>Barber: {{ barber.first_name }} {{ barber.last_name }}</p>
     <p>Duration: {{ service.duration }} minutes</p>
     <p>Price: £{{ service.price }}</p>
 
+    <!-- List of available days for the service -->
     <h3>Available Days:</h3>
     <ul>
         {% for day in available_days %}
             <li>
                 {{ day }}
+                <!-- Form to choose time for selected day -->
                 <form action="{{ url_for('choose_time', service_id=service.id, date=day) }}" method="GET">
                     <button type="submit">Choose Time</button>
                 </form>
@@ -19,5 +23,4 @@
             <li>No available days for this service.</li>
         {% endfor %}
     </ul>
-
 {% endblock %}

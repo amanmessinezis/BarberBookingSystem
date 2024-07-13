@@ -1,9 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
+    <!-- Page title -->
     <h1>Your Calendar</h1>
+    <!-- Calendar div element where FullCalendar will be rendered -->
     <div id='calendar'></div>
 
+    <!-- Script to initialize FullCalendar and load events from the server -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var calendarEl = document.getElementById('calendar');

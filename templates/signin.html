@@ -1,15 +1,21 @@
 {% extends 'base.html' %}
 
 {% block content %}
+    <!-- Page title -->
     <h1>Sign In</h1>
+    <!-- Form to sign in, posts data to signin route -->
     <form action="{{ url_for('signin') }}" method="POST">
+        <!-- Email input field -->
         <label for="email">Email Address:</label>
         <input type="email" id="email" name="email" required>
 
+        <!-- Password input field -->
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" required>
 
+        <!-- Submit button to sign in -->
         <button type="submit">Sign In</button>
     </form>
+    <!-- Link to create account page for new users -->
     <p>Don't have an account? <a href="{{ url_for('index') }}">Create one here</a></p>
 {% endblock %}

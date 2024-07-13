@@ -1,17 +1,23 @@
 {% extends 'base.html' %}
 
 {% block content %}
+    <!-- Page title -->
     <h1>Add Availability</h1>
+    <!-- Form to add availability, posts data to save_availability route -->
     <form action="{{ url_for('save_availability') }}" method="POST">
+        <!-- Date input field -->
         <label for="date">Date:</label>
         <input type="date" id="date" name="date" required><br><br>
 
+        <!-- Start time input field -->
         <label for="start_time">Start Time:</label>
         <input type="time" id="start_time" name="start_time" required><br><br>
 
+        <!-- End time input field -->
         <label for="end_time">End Time:</label>
         <input type="time" id="end_time" name="end_time" required><br><br>
 
+        <!-- Submit button to save availability -->
         <button type="submit">Save Availability</button>
     </form>
 {% endblock %}

@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
 
 {% block content %}
+    <!-- Welcome message for the user -->
     <h1>Welcome, {{ current_user.first_name }}</h1>
 
+    <!-- User's appointments section -->
     <h2>Your Appointments</h2>
-
     {% if appointments %}
         <ul>
             {% for appointment, barber in appointments %}
@@ -13,9 +14,11 @@
                     <p>Service: {{ appointment.service.name }}</p>
                     <p>Date: {{ appointment.date }}</p>
                     <p>Time: {{ appointment.start_time }} - {{ appointment.end_time }}</p>
+                    <!-- Form to update appointment -->
                     <form action="{{ url_for('update_appointment', appointment_id=appointment.id) }}" method="GET">
                         <button type="submit">Update Appointment</button>
                     </form>
+                    <!-- Form to delete appointment -->
                     <form action="{{ url_for('delete_appointment', appointment_id=appointment.id) }}" method="POST">
                         <button type="submit">Delete Appointment</button>
                     </form>
@@ -26,6 +29,7 @@
         <p>No appointments found.</p>
     {% endif %}
 
+    <!-- Search barbershops section -->
     <h2>Search for Barbershops</h2>
     <form action="{{ url_for('customer_search_barbershop') }}" method="GET">
         <label for="search">Search:</label>
@@ -33,6 +37,7 @@
         <button type="submit">Search</button>
     </form>
 
+    <!-- Display search results -->
     {% if barbershops %}
         <h2>Search Results</h2>
         <ul>
