@@ -1,9 +1,9 @@
-import os
 import pytest
+from app import Customer
 from app import app, db
-from app import User, Customer
 
 
+# Fixture to configure the test client and in-memory database
 @pytest.fixture
 def client():
     app.config['TESTING'] = True
@@ -16,6 +16,7 @@ def client():
         db.drop_all()
 
 
+# Test case to create a customer account
 def test_create_customer_account(client):
     response = client.post('/', data=dict(
         first_name="Customer",
@@ -28,10 +29,12 @@ def test_create_customer_account(client):
     assert response.status_code == 200
     assert b"Account created successfully" in response.data
 
+    # Verify the customer account is created in the database
     customer = Customer.query.filter_by(email="customer@example.com").first()
     assert customer is not None
 
 
+# Test case to sign in to a customer account
 def test_signin_customer_account(client):
     # First, create a customer account
     client.post('/', data=dict(

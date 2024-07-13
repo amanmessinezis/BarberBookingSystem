@@ -1,9 +1,9 @@
-import os
 import pytest
-from app import app, db, User, Barber, Barbershop
 from werkzeug.security import generate_password_hash
+from app import app, db, Barber
 
 
+# Fixture to configure the test client and in-memory database
 @pytest.fixture
 def client():
     app.config['TESTING'] = True
@@ -16,10 +16,10 @@ def client():
         db.drop_all()
 
 
+# Fixture to set up initial database state with a barber
 @pytest.fixture
 def setup_database():
     with app.app_context():
-        # Create a barber with a hashed password
         hashed_password = generate_password_hash("password", method='pbkdf2:sha256')
         barber = Barber(first_name="Barber", last_name="User", email="barber@example.com", password=hashed_password)
         db.session.add(barber)
@@ -28,6 +28,7 @@ def setup_database():
         yield db
 
 
+# Test case to create a barbershop
 def test_create_barbershop(client, setup_database):
     # Sign in as the barber
     client.post('/signin', data=dict(email="barber@example.com", password="password"), follow_redirects=True)

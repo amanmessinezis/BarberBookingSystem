@@ -4,6 +4,7 @@ from app import app, db, User, Barber, Customer, Barbershop
 from werkzeug.security import generate_password_hash
 
 
+# Fixture to configure the test client and in-memory database
 @pytest.fixture
 def client():
     app.config['TESTING'] = True
@@ -16,22 +17,20 @@ def client():
         db.drop_all()
 
 
+# Fixture to set up initial database state with a barber, barbershop, and customer
 @pytest.fixture
 def setup_database():
     with app.app_context():
-        # Create a barber with a hashed password
         hashed_password = generate_password_hash("password", method='pbkdf2:sha256')
         barber = Barber(first_name="Barber", last_name="User", email="barber@example.com", password=hashed_password)
         db.session.add(barber)
         db.session.commit()
 
-        # Create a barbershop
         barbershop = Barbershop(name="Test Barbershop", address="123 Barber St", phone_number="1234567890",
                                 creator_id=barber.id)
         db.session.add(barbershop)
         db.session.commit()
 
-        # Create a customer with a hashed password
         hashed_password = generate_password_hash("password", method='pbkdf2:sha256')
         customer = Customer(first_name="Customer", last_name="User", email="customer@example.com",
                             password=hashed_password)
@@ -41,6 +40,7 @@ def setup_database():
         yield db
 
 
+# Test case to search for a barbershop as a customer
 def test_customer_find_barbershop(client, setup_database):
     # Sign in as the customer
     client.post('/signin', data=dict(email="customer@example.com", password="password"), follow_redirects=True)
