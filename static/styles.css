@@ -19,15 +19,20 @@ body {
     align-items: center;
 }
 
-.navbar-left .navbar-logo {
-    color: white;
-    font-size: 20px;
-    font-weight: bold;
-    text-decoration: none;
+.navbar-left {
+    display: flex;
+    align-items: center;
+    margin-left: 20px; /* Added margin to move the icon to the right */
 }
 
-.navbar-left .navbar-logo:hover {
-    color: #ddd;
+.navbar-left .navbar-logo {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-left .navbar-icon {
+    width: 80px; /* Adjusted to double the size */
+    height: 80px; /* Adjusted to double the size */
 }
 
 .navbar-right {

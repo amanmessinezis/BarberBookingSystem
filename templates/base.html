@@ -7,14 +7,17 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet'/>
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='scissors.png') }}" type="image/png">
 </head>
 <body>
 <div class="navbar">
     <div class="navbar-left">
         <a href="
-
                 {% if current_user.is_authenticated %}{% if current_user.type == 'barber' %}{{ url_for('barber_home') }}{% else %}{{ url_for('customer_home') }}{% endif %}{% else %}{{ url_for('index') }}{% endif %}"
-           class="navbar-logo">Barber Booking System</a>
+           class="navbar-logo">
+            <img src="{{ url_for('static', filename='scissors.png') }}" alt="Barber Booking System" class="navbar-icon">
+        </a>
     </div>
     {% if current_user.is_authenticated %}
         <div class="navbar-right">
@@ -43,6 +46,6 @@
 <!-- FullCalendar JS -->
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales-all.min.js'></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js'></script>
 </body>
 </html>
