@@ -23,7 +23,6 @@ BarberBookingSystem/
 │   ├── choose_time.html
 │   ├── customer_home.html
 │   ├── index.html
-│   ├── new_barbershop.html
 │   ├── signin.html
 │   ├── update_appointment.html
 │   ├── update_availability.html
