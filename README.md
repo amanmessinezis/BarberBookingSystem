@@ -1,4 +1,3 @@
-
 ---
 
 # Barber Booking System
@@ -59,7 +58,7 @@ BarberBookingSystem/
 1. **Create and activate a virtual environment:**
 
     ```sh
-    python3 -m venv .venv
+    py -m venv .venv
     source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
     ```
 
